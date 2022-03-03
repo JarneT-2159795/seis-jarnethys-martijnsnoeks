@@ -1,37 +1,41 @@
-## Homepage taak
+## Taak Software engineering voor geïntegreerde systemen
 
-You can use the [editor on GitHub](https://github.com/JarneT-2159795/taak-seis/edit/gh-pages/index.md) to maintain and preview the content for your website in Markdown files.
+### Deel 0: bytestream
+Ter voorbereiding van de verdere taken hebben we reeds een klasse aangemaakt om de binary WebAssembly-bestanden (wasm) te kunnen interpreteren. Hieronder staan de functies opgelijst die we nu hebben geïmplementeerd. Uiteraard wordt dit later nog uitgebreid.
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+```c++
+// Initialiseren bytestream
+ByteStream(std::string filepath);
+ByteStream() : currentByteIndex{0}{};
+void readFile(std::string filepath);
 
-### Markdown
+// Byte uitlezen
+std::pair<uint8_t, bool> readByte();
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+// ASCII-string met gegeven lengte uitlezen
+std::string readASCIIString(int length);
 
-```markdown
-Syntax highlighted code block
+// Verschillende types getallen uitlezen
+int32_t  readInt32();
+int64_t readInt64();
+uint32_t readUInt32();
+uint64_t readUInt64();
+_Float32 readFloat32();
+_Float64 readFloat64();
 
-# Header 1
-## Header 2
-### Header 3
+// Positie in bytestream aanpassen
+void seek(int offset);
 
-- Bulleted
-- List
+// Informatie over bytestream
+int getCurrentByteIndex() { return currentByteIndex; };
+int getRemainingByteCount() { return buffer.size() - currentByteIndex; };
+int getTotalByteCount() { return buffer.size(); };
 
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
+// Bytes en getallen in verschillende formaten uitprinten
+void printHex(uint8_t byte);
+void printBinary(uint8_t byte);
+void printBinary(int32_t val);
+void printBinary(uint32_t val);
+void printBinary(int64_t val);
+void printBinary(uint64_t val);
 ```
-
-For more details see [Basic writing and formatting syntax](https://docs.github.com/en/github/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/JarneT-2159795/taak-seis/settings/pages). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.
