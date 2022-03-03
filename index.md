@@ -6,7 +6,7 @@ Ter voorbereiding van de verdere taken hebben we reeds een klasse aangemaakt om 
 ```c++
 // Initialiseren bytestream
 ByteStream(std::string filepath);
-ByteStream() : currentByteIndex{0}{};
+ByteStream();
 void readFile(std::string filepath);
 
 // Byte uitlezen
@@ -27,9 +27,9 @@ _Float64 readFloat64();
 void seek(int offset);
 
 // Informatie over bytestream
-int getCurrentByteIndex() { return currentByteIndex; };
-int getRemainingByteCount() { return buffer.size() - currentByteIndex; };
-int getTotalByteCount() { return buffer.size(); };
+int getCurrentByteIndex();
+int getRemainingByteCount();
+int getTotalByteCount();
 
 // Bytes en getallen in verschillende formaten uitprinten
 void printHex(uint8_t byte);
