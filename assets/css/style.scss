@@ -3,6 +3,10 @@
 
 @import "{{ site.theme }}";
 
-.inner {
-  max-width: 90%;
+body {
+  min-width: 90%;
+}
+
+.language-c++ highlighter-rouge {
+  min-width: 90%;
 }
