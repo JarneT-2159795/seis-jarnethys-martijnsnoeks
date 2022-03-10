@@ -10,7 +10,7 @@
 
 The following code reads the contents of a binary file one byte at a time and stores these in a std::vector. The bytes can be read using the readByte-function. This will return the next byte in the stream or a out of range-exception when there are no more bytes.
 
-```C++
+```c++
 
 ByteStream::ByteStream(std::string filepath) {
     std::ifstream f(filepath, std::ios::binary);
@@ -107,7 +107,7 @@ To decode an unsigned integer we reverse the process above. The example will dec
 
 ```
 
-```C++
+```c++
 
 uint32_t ByteStream::readUInt32() {
     uint32_t result{0}; // The resulting number
@@ -149,7 +149,7 @@ Decoding a signed integer follows the same steps as for an unsigned integer exce
 
 ```
 
-```C++
+```c++
 
 int64_t ByteStream::readInt64() {
     int64_t result{0};  // The resulting number
@@ -185,7 +185,7 @@ Decoding a float in WebAssembly is much more straightforward in respect to the i
 
 ```
 
-```C++
+```c++
 
 _Float64 ByteStream::readFloat64() {
     _Float64 result{0};
@@ -203,7 +203,7 @@ _Float64 ByteStream::readFloat64() {
 
 Parsing strings from bytecode is rather simple because all ASCII characters are represented by bytes anyway. Given the length of the string each byte can be read, converted to a character and appended to the final string.
 
-```C++
+```c++
 
 std::string ByteStream::readASCIIString(int length) {
     std::string s{""};
