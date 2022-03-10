@@ -14,7 +14,9 @@ public:
 
     void readFile(std::string filepath);
     
-    std::pair<uint8_t, bool> readByte();
+    uint8_t readByte();
+    bool atEnd() { return !(currentByteIndex < buffer.size()); };
+
     std::string readASCIIString(int length);
 
     int32_t  readInt32();
@@ -37,4 +39,6 @@ public:
     void printBinary(uint32_t val);
     void printBinary(int64_t val);
     void printBinary(uint64_t val);
+    void printBinary(_Float32 val);
+    void printBinary(_Float64 val);
 };
