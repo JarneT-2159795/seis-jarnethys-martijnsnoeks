@@ -15,7 +15,7 @@ public:
     void readFile(std::string filepath);
     
     uint8_t readByte();
-    bool atEnd() { return !(currentByteIndex < buffer.size()); };
+    bool atEnd() { return (currentByteIndex > buffer.size()); };
 
     std::string readASCIIString(int length);
 
