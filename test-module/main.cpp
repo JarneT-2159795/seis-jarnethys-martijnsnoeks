@@ -2,10 +2,9 @@
 #include <iostream>
 
 int main() {
-    Module m{"./test.wasm"};
-    auto funcs = m.getFunctions();
-    for (auto func : funcs) {
-        std::cout << func.getName() << std::endl;
-    }
+    ByteStream bs;
+    Module module{"./test.wasm"};
+    module("add", 50);
+    std::cout << module.getStack().top().get() << std::endl;
     return 0;
 }
