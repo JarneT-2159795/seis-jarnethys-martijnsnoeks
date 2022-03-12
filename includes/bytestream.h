@@ -10,12 +10,13 @@ private:
 
 public:
     ByteStream(std::string filepath);
+    ByteStream(std::vector<uint8_t> stream) : buffer{ stream }, currentByteIndex{ 0 } {};
     ByteStream() : currentByteIndex{0}{};
 
     void readFile(std::string filepath);
     
     uint8_t readByte();
-    bool atEnd() { return (currentByteIndex > buffer.size()); };
+    bool atEnd() { return !(currentByteIndex < buffer.size()); };
 
     std::string readASCIIString(int length);
 
