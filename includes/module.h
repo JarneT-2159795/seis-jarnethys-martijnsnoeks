@@ -1,12 +1,12 @@
-#include "bytestream.h"
 #include "function.h"
-#include <stack>
 #include <exception>
 
 class Module {
 public:
     Module(std::string filepath);
     std::vector<Function> getFunctions();
+    void operator()(std::string name, ...);
+    std::stack<Variable> getStack() { return stack; };
 
 private:
     ByteStream bytestr;
@@ -33,6 +33,7 @@ struct ModuleException : public std::exception
 {
    std::string s;
    ModuleException(std::string ss, int byte) : s(ss + " at byte " + std::to_string((int)byte)) {}
+   ModuleException(std::string ss) : s(ss) {}
    ~ModuleException() throw () {}
    const char* what() const throw() { return s.c_str(); }
 };

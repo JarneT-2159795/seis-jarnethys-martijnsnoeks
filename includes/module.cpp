@@ -1,16 +1,17 @@
 #include "module.h"
 #include <iostream>
+#include <cstdarg>
 
 Module::Module(std::string filepath) : bytestr{filepath} {
     for (int i = 0; i < 8; ++i) {   // Magic and version number
         bytestr.readByte();
     }
     uint8_t section;
-    while (!bytestr.atEnd()) {
+    while (!bytestr.atEnd() && bytestr.getRemainingByteCount() > 1) {
         section = bytestr.readByte();
         switch (section) {
         case 0x00:
-            std::cout << "Custom section at byte " << std::hex << bytestr.getCurrentByteIndex() << std::dec << std::endl;
+            std::cout << "Custom section" << std::endl;
             break;
         case 0x01:
             bytestr.readByte(); // Count function types
@@ -60,6 +61,36 @@ std::vector<Function> Module::getFunctions() {
     return functions;
 }
 
+void Module::operator()(std::string name, ...) {
+    for (auto func : functions) {
+        if (func.getName() == name) {
+            std::va_list args;
+            va_start(args, nullptr);
+            std::vector<Variable> localStack;
+            for (auto param : func.getParams()) {
+                switch (param.getType()) {
+                case VariableType::is_int32:
+                    localStack.push_back(Variable(param.getType(), va_arg(args, int32_t)));
+                    break;
+                case VariableType::is_int64:
+                    localStack.push_back(Variable(param.getType(), va_arg(args, int64_t)));
+                    break;
+                case VariableType::is_float32:
+                    localStack.push_back(Variable(param.getType(), va_arg(args, _Float64)));
+                    break;
+                case VariableType::is_float64:
+                    localStack.push_back(Variable(param.getType(), va_arg(args, _Float64)));
+                    break;
+                }
+            }
+            func(localStack);
+            va_end(args);
+            return;
+        }
+    }
+    throw ModuleException("Function '" + name + "' not found");
+}
+
 VariableType Module::getVarType(uint8_t type) {
     switch (type) {
             case 0x7F:
@@ -95,7 +126,7 @@ void Module::readTypeSection(int length) {
         for (int i = 0; i < numResults; ++i) {
             results.push_back(Variable(getVarType(bytestr.readByte())));
         }
-        functions.push_back(Function(params, results));
+        functions.push_back(Function(params, results, &stack));
     }
     bytestr.seek(-1);
 }
@@ -140,11 +171,11 @@ void Module::readCodeSection(int length) {
 
         uint8_t byte = bytestr.readByte();
         std::vector<uint8_t> body;
-        std:: cout << std::hex;
         while (byte != 0x0B) {
             body.push_back(byte);
             byte = bytestr.readByte();
         }
+        functions[i].setBody(body);
     }
 }
 

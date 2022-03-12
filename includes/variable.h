@@ -6,6 +6,7 @@ class Variable {
 public:
     Variable(VariableType varType);
     Variable(VariableType varType, size_t value);
+    VariableType getType();
     size_t get();
     void set(size_t value);
 

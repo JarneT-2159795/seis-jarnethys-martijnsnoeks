@@ -20,6 +20,21 @@ Variable::Variable(VariableType varType, size_t value) : vt{varType} {
 Variable::Variable(VariableType varType) : Variable(varType, 0) {
 };
 
+VariableType Variable::getType() {
+    switch (vt) {
+        case VariableType::is_int32:
+            return VariableType::is_int32;
+        case VariableType::is_int64:
+            return VariableType::is_int64;
+        case VariableType::is_float32:
+            return VariableType::is_float32;
+        case VariableType::is_float64:
+            return VariableType::is_float64;
+        default:
+            return VariableType::is_int64;
+    }
+}
+
 size_t Variable::get() {
     switch (vt) {
         case VariableType::is_int32:
