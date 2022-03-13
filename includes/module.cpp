@@ -65,7 +65,7 @@ void Module::operator()(std::string name, ...) {
     for (auto func : functions) {
         if (func.getName() == name) {
             std::va_list args;
-            va_start(args, nullptr);
+            va_start(args, name);
             std::vector<Variable> localStack;
             for (auto param : func.getParams()) {
                 switch (param.getType()) {

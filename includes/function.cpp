@@ -26,6 +26,9 @@ void Function::setBody(std::vector<uint8_t> functionBody) {
 
 void Function::operator()(std::vector<Variable> locals) {
     std::vector<Variable> localStack = locals;
+    for (auto par : localVars) {
+        localStack.push_back(par);
+    }
     ByteStream bs(body);
     uint8_t byte;
     while (!bs.atEnd()) {
