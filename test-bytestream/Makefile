@@ -3,7 +3,7 @@
 CC=g++
 
 compile:
-	$(CC) main.cpp bytestream.cpp -o main.out
+	$(CC) -g main.cpp ../includes/bytestream.cpp -o main.out
 
 execute:
 	/bin/python3 ./hex_number_generator.py
