@@ -3,9 +3,7 @@
 #include <cstdarg>
 
 Module::Module(std::string filepath) : bytestr{filepath} {
-    for (int i = 0; i < 8; ++i) {   // Magic and version number
-        bytestr.readByte();
-    }
+    bytestr.seek(8);    // Magic and version number
     uint8_t section;
     while (!bytestr.atEnd() && bytestr.getRemainingByteCount() > 1) {
         section = bytestr.readByte();
@@ -61,34 +59,38 @@ std::vector<Function> Module::getFunctions() {
     return functions;
 }
 
-void Module::operator()(std::string name, ...) {
+void Module::operator()(std::string name, std::vector<Variable> vars) {
     for (auto func : functions) {
         if (func.getName() == name) {
-            std::va_list args;
-            va_start(args, name);
-            std::vector<Variable> localStack;
-            for (auto param : func.getParams()) {
-                switch (param.getType()) {
-                case VariableType::is_int32:
-                    localStack.push_back(Variable(param.getType(), va_arg(args, int32_t)));
-                    break;
-                case VariableType::is_int64:
-                    localStack.push_back(Variable(param.getType(), va_arg(args, int64_t)));
-                    break;
-                case VariableType::is_float32:
-                    localStack.push_back(Variable(param.getType(), va_arg(args, _Float64)));
-                    break;
-                case VariableType::is_float64:
-                    localStack.push_back(Variable(param.getType(), va_arg(args, _Float64)));
-                    break;
-                }
-            }
-            func(localStack);
-            va_end(args);
+            stack.insert(stack.end(), vars.begin(), vars.end());
+            func(stack.size() - func.getParams().size());
             return;
         }
     }
     throw ModuleException("Function '" + name + "' not found");
+}
+
+void Module::printVariables(int amount) {
+    for (int i = amount; i > 0; --i) {
+        auto var = &stack.at(stack.size() - amount);
+        switch (var->index())
+        {
+        case 0:
+            std::cout << std::get<int32_t>(*var) << std::endl;
+            break;
+        case 1:
+            std::cout << std::get<int64_t>(*var) << std::endl;
+            break;
+        case 2:
+            std::cout << std::get<float32_t>(*var) << std::endl;
+            break;
+        case 3:
+            std::cout << std::get<float64_t>(*var) << std::endl;
+            break;
+        default:
+            break;
+        }
+    }
 }
 
 VariableType Module::getVarType(uint8_t type) {
@@ -100,10 +102,10 @@ VariableType Module::getVarType(uint8_t type) {
                 return VariableType::is_int64;
                 break;
             case 0x7D:
-                return VariableType::is_float32;
+                return VariableType::isfloat32_t;
                 break;
             case 0x7C:
-                return VariableType::is_float64;
+                return VariableType::isfloat64_t;
                 break;
             default:
                 throw ModuleException("Invalid file: not a valid parameter type", bytestr.getCurrentByteIndex());
@@ -115,16 +117,16 @@ void Module::readTypeSection(int length) {
     while(bytestr.readByte() == 0x60) {  // Read a function type
         // Read the type of function parameters
         int numParams = bytestr.readByte();
-        std::vector<Variable> params;
+        std::vector<VariableType> params;
         for (int i = 0; i < numParams; ++i) {
-            params.push_back(Variable(getVarType(bytestr.readByte())));
+            params.push_back(getVarType(bytestr.readByte()));
         }
 
         // Read the type of function results
         int numResults = bytestr.readByte();
-        std::vector<Variable> results;
+        std::vector<VariableType> results;
         for (int i = 0; i < numResults; ++i) {
-            results.push_back(Variable(getVarType(bytestr.readByte())));
+            results.push_back(getVarType(bytestr.readByte()));
         }
         functions.push_back(Function(params, results, &stack));
     }

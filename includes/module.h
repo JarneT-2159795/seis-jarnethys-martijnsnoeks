@@ -1,16 +1,15 @@
 #include "function.h"
-#include <exception>
 
 class Module {
 public:
     Module(std::string filepath);
     std::vector<Function> getFunctions();
-    void operator()(std::string name, ...);
-    std::stack<Variable> getStack() { return stack; };
+    void operator()(std::string name, std::vector<Variable> vars);
+    void printVariables(int amount);
 
 private:
     ByteStream bytestr;
-    std::stack<Variable> stack;
+    std::vector<Variable> stack;
     std::vector<Function> functions;
 
     VariableType getVarType(uint8_t type);
