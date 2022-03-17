@@ -7,31 +7,47 @@
 
 ByteStream::ByteStream(std::string filepath) : currentByteIndex{ 0 } {
     std::ifstream f(filepath, std::ios::binary);
-
     if (f.is_open()) {
-        char c;
-        while (!f.eof()) {
-            f.read(&c, 1);
-            buffer.push_back((uint8_t)c);
-        }
-    }
+        // Get length of file:
+        f.seekg (0, f.end);
+        size = f.tellg();
+        f.seekg (0, f.beg);
 
+        buffer = new uint8_t[size];
+        f.read((char*)buffer, size);
+    }
     f.close();
 }
 
+ByteStream::ByteStream(std::vector<uint8_t> stream) : currentByteIndex{ 0 } {
+    size = stream.size();
+    buffer = new uint8_t[size];
+    for (int i = 0; i < size; ++i) {
+        buffer[i] = stream[i];
+    }
+}
+
+ByteStream::~ByteStream() {
+    if (buffer != nullptr) {
+        delete buffer;
+    }
+}
+
 void ByteStream::readFile(std::string filepath) {
-    buffer.clear();
+    if (buffer != nullptr) {
+        delete buffer;
+    }
     currentByteIndex = 0;
     std::ifstream f(filepath, std::ios::binary);
-
     if (f.is_open()) {
-        char c;
-        while (!f.eof()) {
-            f.read(&c, 1);
-            buffer.push_back((uint8_t)c);
-        }
-    }
+        // Get length of file:
+        f.seekg (0, f.end);
+        size = f.tellg();
+        f.seekg (0, f.beg);
 
+        buffer = new uint8_t[size];
+        f.read((char*)buffer, size);
+    }
     f.close();
 }
 
@@ -122,8 +138,8 @@ uint64_t ByteStream::readUInt64() {
     return result;
 }
 
-_Float32 ByteStream::readFloat32() {
-    _Float32 result{0};
+float32_t ByteStream::readFloat32() {
+    float32_t result{0};
 
     for (int i = 0; i < 4; ++i) {
         *((uint8_t*)(&result) + i) = readByte();
@@ -132,8 +148,8 @@ _Float32 ByteStream::readFloat32() {
     return result;
 }
 
-_Float64 ByteStream::readFloat64() {
-    _Float64 result{0};
+float64_t ByteStream::readFloat64() {
+    float64_t result{0};
 
     for (int i = 0; i < 8; ++i) {
         *((uint8_t*)(&result) + i) = readByte();
@@ -173,14 +189,14 @@ void ByteStream::printBinary(uint64_t val) {
     std::cout << std::bitset<64>(val);
 }
 
-void ByteStream::printBinary(_Float32 val) {
+void ByteStream::printBinary(float32_t val) {
     uint8_t* bytes = reinterpret_cast<uint8_t*>(&val);
     for (int i = 0; i < 4; ++i) {
         printBinary(bytes[i]);
     }
 }
 
-void ByteStream::printBinary(_Float64 val) {
+void ByteStream::printBinary(float64_t val) {
     uint8_t* bytes = reinterpret_cast<uint8_t*>(&val);
     for (int i = 0; i < 8; ++i) {
         printBinary(bytes[i]);
