@@ -10,6 +10,7 @@ public:
 private:
     ByteStream bytestr;
     std::vector<Variable> stack;
+    std::vector<std::vector<VariableType>> functionTypes;
     std::vector<Function> functions;
 
     VariableType getVarType(uint8_t type);

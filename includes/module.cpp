@@ -128,7 +128,8 @@ void Module::readTypeSection(int length) {
         for (int i = 0; i < numResults; ++i) {
             results.push_back(getVarType(bytestr.readByte()));
         }
-        functions.push_back(Function(params, results, &stack));
+        functionTypes.push_back(params);
+        functionTypes.push_back(results);
     }
     bytestr.seek(-1);
 }
@@ -139,6 +140,7 @@ void Module::readFunctionSection(int length) {
     int numFunctions = bytestr.readByte();
     for (int i = 0; i < numFunctions; ++i) {
         int signature = bytestr.readByte();
+        functions.emplace_back(Function(functionTypes[signature], functionTypes[signature + 1], &stack));
     }
 }
 
