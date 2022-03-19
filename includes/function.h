@@ -12,7 +12,7 @@ typedef std::variant<int32_t, int64_t, float32_t, float64_t> Variable;
 
 class Function {
 public:
-    Function(std::vector<VariableType> paramaterList, std::vector<VariableType> resultList, std::vector<Variable> *moduleStack);
+    Function(std::vector<VariableType> paramaterList, std::vector<VariableType> resultList, std::vector<Variable> *moduleStack, std::vector<Function> *moduleFunctions);
     void setName(std::string functionName);
     std::string getName();
     std::vector<VariableType> getParams() { return params; };
@@ -30,6 +30,7 @@ private:
 
     int stackOffset = 0;
     std::vector<Variable> *stack;
+    std::vector<Function> *functions;
 };
 
 struct FunctionException : public std::exception

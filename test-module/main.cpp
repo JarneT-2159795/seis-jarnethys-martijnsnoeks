@@ -17,8 +17,8 @@ int main() {
             vars.push_back(getVariable(param));
         }
         module(func, vars);
-        std::cout << "Result: ";
-        module.printVariables(1);
+        std::cout << "Results: ";
+        module.printVariables(funcs[choice].getResults().size());
         std::cout << "\n\n" << std::endl;
         choice = chooseFunction(funcs);
     }

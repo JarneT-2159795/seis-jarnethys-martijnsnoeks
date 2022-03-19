@@ -12,7 +12,7 @@ Module::Module(std::string filepath) : bytestr{filepath} {
             std::cout << "Custom section" << std::endl;
             break;
         case 0x01:
-            bytestr.readByte(); // Count function types
+            bytestr.seek(1); // Count function types
             readTypeSection(bytestr.readByte());
             break;
         case 0x02:
@@ -72,25 +72,26 @@ void Module::operator()(std::string name, std::vector<Variable> vars) {
 
 void Module::printVariables(int amount) {
     for (int i = amount; i > 0; --i) {
-        auto var = &stack.at(stack.size() - amount);
+        auto var = &stack.at(stack.size() - i);
         switch (var->index())
         {
         case 0:
-            std::cout << std::get<int32_t>(*var) << std::endl;
+            std::cout << std::get<int32_t>(*var) << " ";
             break;
         case 1:
-            std::cout << std::get<int64_t>(*var) << std::endl;
+            std::cout << std::get<int64_t>(*var) << " ";
             break;
         case 2:
-            std::cout << std::get<float32_t>(*var) << std::endl;
+            std::cout << std::get<float32_t>(*var) << " ";
             break;
         case 3:
-            std::cout << std::get<float64_t>(*var) << std::endl;
+            std::cout << std::get<float64_t>(*var) << " ";
             break;
         default:
             break;
         }
     }
+    std::cout << std::endl;
 }
 
 VariableType Module::getVarType(uint8_t type) {
@@ -134,34 +135,34 @@ void Module::readTypeSection(int length) {
     bytestr.seek(-1);
 }
 
-void Module::readImportSection(int length) {}
+void Module::readImportSection(int length) { std::cout << "import section" << std::endl; }
 
 void Module::readFunctionSection(int length) {
     int numFunctions = bytestr.readByte();
     for (int i = 0; i < numFunctions; ++i) {
-        int signature = bytestr.readByte();
-        functions.emplace_back(Function(functionTypes[signature], functionTypes[signature + 1], &stack));
+        int signature = 2 * bytestr.readByte();
+        functions.emplace_back(Function(functionTypes[signature], functionTypes[signature + 1], &stack, &functions));
     }
 }
 
-void Module::readTableSection(int length) {}
+void Module::readTableSection(int length) { std::cout << "table section" << std::endl; }
 
-void Module::readMemorySection(int length) {}
+void Module::readMemorySection(int length) { std::cout << "memory section" << std::endl; }
 
-void Module::readGlobalSection(int length) {}
+void Module::readGlobalSection(int length) { std::cout << "global section" << std::endl; }
 
 void Module::readExportSection(int length) {
     int exports = bytestr.readByte();
     for (int i = 0; i < exports; ++i) {
-        auto var = bytestr.readASCIIString(bytestr.readByte());
-        functions[i].setName(var);
-        bytestr.seek(2); // TODO fix export kind and func index
+        auto name = bytestr.readASCIIString(bytestr.readByte());
+        bytestr.seek(1); // TODO fix export kind
+        functions[bytestr.readUInt32()].setName(name);
     }
 }
 
-void Module::readStartSection(int length) {}
+void Module::readStartSection(int length) { std::cout << "start section" << std::endl; }
 
-void Module::readElementSection(int length) {}
+void Module::readElementSection(int length) { std::cout << "element section" << std::endl; }
 
 void Module::readCodeSection(int length) {
     int numFunctions = bytestr.readByte();
@@ -183,6 +184,6 @@ void Module::readCodeSection(int length) {
     }
 }
 
-void Module::readDataSection(int length) {}
+void Module::readDataSection(int length) { std::cout << "data section" << std::endl; }
 
-void Module::readDataCountSection(int length) {}
+void Module::readDataCountSection(int length) { std::cout << "datacount section" << std::endl; }

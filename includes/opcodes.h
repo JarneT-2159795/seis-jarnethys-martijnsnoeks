@@ -1,12 +1,22 @@
 #include <cstdint>
 
+// Control instructions
+const uint8_t IF = 0x4;
+const uint8_t CALL = 0x10;
+
+// Variable instructions
 const uint8_t LOCALGET = 0x20;
 const uint8_t LOCALSET = 0x21;
 
+// Numeric instructions
 const uint8_t I32CONST = 0x41;
 const uint8_t I64CONST = 0x42;
 const uint8_t F32CONST = 0x43;
 const uint8_t F64CONST = 0x44;
+
+const int8_t I32GT_S = 0x4A;
+
+const uint8_t F64LT = 0x63;
 
 const uint8_t I32ADD = 0x6A;
 const uint8_t I32SUB = 0x6B;
@@ -24,4 +34,5 @@ const uint8_t F64ADD = 0xA0;
 const uint8_t F64SUB = 0xA1;
 const uint8_t F64MUL = 0xA2;
 
+// Expressions
 const uint8_t END = 0x0B;

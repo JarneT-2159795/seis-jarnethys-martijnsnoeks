@@ -2,8 +2,8 @@
 #include <cstdarg>
 #include <iostream>
 
-Function::Function(std::vector<VariableType> paramaterList, std::vector<VariableType> resultList, std::vector<Variable> *globalStack) 
-            : params{ paramaterList }, results{ resultList }, stack{ globalStack } {
+Function::Function(std::vector<VariableType> paramaterList, std::vector<VariableType> resultList, std::vector<Variable> *globalStack, std::vector<Function> *moduleFunctions) 
+            : params{ paramaterList }, results{ resultList }, stack{ globalStack }, functions{ moduleFunctions } {
 };
 
 void Function::setName(std::string functionName) {
@@ -46,8 +46,19 @@ void Function::operator()(int offset) {
     uint8_t byte;
     while (!bs.atEnd()) {
         byte = bs.readByte();
-        switch (byte)
-        {
+        switch (byte) {
+        case IF:
+            {
+                int32_t var1 = std::get<int32_t>(stack->back());
+                stack->pop_back();
+                break;
+            }
+        case CALL:
+            {
+                uint32_t funcIndex = bs.readUInt32();
+                functions->at(funcIndex).operator()(stack->size() - functions->at(funcIndex).getParams().size());
+                break;
+            }
         case LOCALGET:
             stack->push_back(stack->at(bs.readUInt32() + offset));
             break;
@@ -66,6 +77,24 @@ void Function::operator()(int offset) {
         case F64CONST:
             stack->push_back(float64_t(bs.readFloat64()));
             break;
+        case I32GT_S:
+            {
+                int32_t var1 = std::get<int32_t>(stack->back());
+                stack->pop_back();
+                int32_t var2 = std::get<int32_t>(stack->back());
+                stack->pop_back();
+                stack->push_back(int32_t(var1 > var2));
+                break;
+            }
+        case F64LT:
+            {
+                float64_t var1 = std::get<float64_t>(stack->back());
+                stack->pop_back();
+                float64_t var2 = std::get<float64_t>(stack->back());
+                stack->pop_back();
+                stack->push_back(int32_t(var1 < var2));
+                break;
+            }
         case I32ADD:
             {
                 int32_t var1 = std::get<int32_t>(stack->back());
@@ -81,7 +110,7 @@ void Function::operator()(int offset) {
                 stack->pop_back();
                 int32_t var2 = std::get<int32_t>(stack->back());
                 stack->pop_back();
-                stack->push_back(int32_t(var1 - var2));
+                stack->push_back(int32_t(var2 - var1));
                 break;
             }
         case I32MUL:
@@ -108,7 +137,7 @@ void Function::operator()(int offset) {
                 stack->pop_back();
                 int64_t var2 = std::get<int64_t>(stack->back());
                 stack->pop_back();
-                stack->push_back(int64_t(var1 - var2));
+                stack->push_back(int64_t(var2 - var1));
                 break;
             }
         case I64MUL:
@@ -135,7 +164,7 @@ void Function::operator()(int offset) {
                 stack->pop_back();
                 float32_t var2 = std::get<float32_t>(stack->back());
                 stack->pop_back();
-                stack->push_back(float32_t(var1 - var2));
+                stack->push_back(float32_t(var2 - var1));
                 break;
             }
         case F32MUL:
@@ -175,7 +204,7 @@ void Function::operator()(int offset) {
                 break;
             }
         case END:
-            return;
+            break;
         
         default:
             throw FunctionException("Invalid or unsupported instuction", byte);
