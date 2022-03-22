@@ -2,7 +2,7 @@
 #include <variant>
 #include <exception>
 #include "bytestream.h"
-#include "opcodes.h"
+#include "instructions.h"
 
 #define float32_t float
 #define float64_t double

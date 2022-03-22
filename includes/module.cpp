@@ -8,44 +8,44 @@ Module::Module(std::string filepath) : bytestr{filepath} {
     while (!bytestr.atEnd() && bytestr.getRemainingByteCount() > 1) {
         section = bytestr.readByte();
         switch (section) {
-        case 0x00:
+        case CUSTOM_SECTION:
             std::cout << "Custom section" << std::endl;
             break;
-        case 0x01:
+        case TYPE_SECTION:
             bytestr.seek(1); // Count function types
             readTypeSection(bytestr.readByte());
             break;
-        case 0x02:
+        case IMPORT_SECTION:
             readImportSection(bytestr.readByte());
             break;
-        case 0x03:
+        case FUNCTION_SECTION:
             readFunctionSection(bytestr.readByte());
             break;
-        case 0x04:
+        case TABLE_SECTION:
             readTableSection(bytestr.readByte());
             break;
-        case 0x05:
+        case MEMORY_SECTION:
             readMemorySection(bytestr.readByte());
             break;
-        case 0x06:
+        case GLOBAL_SECTION:
             readGlobalSection(bytestr.readByte());
             break;
-        case 0x07:
+        case EXPORT_SECTION:
             readExportSection(bytestr.readByte());
             break;
-        case 0x08:
+        case START_SECTION:
             readStartSection(bytestr.readByte());
             break;
-        case 0x09:
+        case ELEMENT_SECTION:
             readElementSection(bytestr.readByte());
             break;
-        case 0x0A:
+        case CODE_SECTION:
             readCodeSection(bytestr.readByte());
             break;
-        case 0x0B:
+        case DATA_SECTION:
             readDataSection(bytestr.readByte());
             break;
-        case 0x0C:
+        case DATACOUNT_SECTION:
             readDataCountSection(bytestr.readByte());
             break;
         default:
@@ -96,16 +96,16 @@ void Module::printVariables(int amount) {
 
 VariableType Module::getVarType(uint8_t type) {
     switch (type) {
-            case 0x7F:
+            case INT32:
                 return VariableType::is_int32;
                 break;
-            case 0x7E:
+            case INT64:
                 return VariableType::is_int64;
                 break;
-            case 0x7D:
+            case FLOAT32:
                 return VariableType::isfloat32_t;
                 break;
-            case 0x7C:
+            case FLOAT64:
                 return VariableType::isfloat64_t;
                 break;
             default:

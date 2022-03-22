@@ -1,5 +1,26 @@
 #include <cstdint>
 
+// File sections
+const uint8_t CUSTOM_SECTION = 0x0;
+const uint8_t TYPE_SECTION = 0x1;
+const uint8_t IMPORT_SECTION = 0x2;
+const uint8_t FUNCTION_SECTION = 0x3;
+const uint8_t TABLE_SECTION = 0x4;
+const uint8_t MEMORY_SECTION = 0x5;
+const uint8_t GLOBAL_SECTION = 0x6;
+const uint8_t EXPORT_SECTION = 0x7;
+const uint8_t START_SECTION = 0x8;
+const uint8_t ELEMENT_SECTION = 0x9;
+const uint8_t CODE_SECTION = 0xa;
+const uint8_t DATA_SECTION = 0xb;
+const uint8_t DATACOUNT_SECTION = 0xc;
+
+// Variable types
+const uint8_t INT32 = 0x7F;
+const uint8_t INT64 = 0x7E;
+const uint8_t FLOAT32 = 0x7D;
+const uint8_t FLOAT64 = 0x7C;
+
 // Control instructions
 const uint8_t IF = 0x4;
 const uint8_t CALL = 0x10;
