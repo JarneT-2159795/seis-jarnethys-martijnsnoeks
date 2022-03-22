@@ -47,12 +47,6 @@ void Function::operator()(int offset) {
     while (!bs.atEnd()) {
         byte = bs.readByte();
         switch (byte) {
-        case IF:
-            {
-                int32_t var1 = std::get<int32_t>(stack->back());
-                stack->pop_back();
-                break;
-            }
         case CALL:
             {
                 uint32_t funcIndex = bs.readUInt32();

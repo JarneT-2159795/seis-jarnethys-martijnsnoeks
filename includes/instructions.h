@@ -22,7 +22,6 @@ const uint8_t FLOAT32 = 0x7D;
 const uint8_t FLOAT64 = 0x7C;
 
 // Control instructions
-const uint8_t IF = 0x4;
 const uint8_t CALL = 0x10;
 
 // Variable instructions
