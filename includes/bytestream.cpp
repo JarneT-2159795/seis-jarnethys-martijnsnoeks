@@ -3,6 +3,7 @@
 #include <iostream>
 #include <iomanip>
 #include <bitset>
+#include <string.h>
 #include <stdexcept>
 
 ByteStream::ByteStream(std::string filepath) : currentByteIndex{ 0 } {
@@ -57,6 +58,15 @@ uint8_t ByteStream::readByte() {
     }
     ++currentByteIndex;
     return buffer[currentByteIndex - 1];
+}
+
+std::vector<uint8_t> ByteStream::readBytes(int amount) {
+    std::vector<uint8_t> bytes;
+    bytes.reserve(amount);
+    for (int i = 0; i < amount; ++i) {
+        bytes.push_back(readByte());
+    }
+    return bytes;
 }
 
 std::string ByteStream::readASCIIString(int length) {
