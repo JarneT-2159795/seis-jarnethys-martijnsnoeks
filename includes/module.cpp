@@ -167,20 +167,15 @@ void Module::readElementSection(int length) { std::cout << "element section" << 
 void Module::readCodeSection(int length) {
     int numFunctions = bytestr.readByte();
     for (int i = 0; i < numFunctions; ++i) {
-        int bodySize = bytestr.readByte();
+        int bodySize = bytestr.readByte() - 1;  // -1 for localVarType
         int localVarTypes = bytestr.readByte();
         for (int j = 0; j < localVarTypes; ++j) {
             int typeCount = bytestr.readByte();
             functions[i].addLocalVars(getVarType(bytestr.readByte()), typeCount);
+            bodySize -= 2;  // -2 for every local variable
         }
 
-        uint8_t byte = bytestr.readByte();
-        std::vector<uint8_t> body;
-        while (byte != 0x0B) {
-            body.push_back(byte);
-            byte = bytestr.readByte();
-        }
-        functions[i].setBody(body);
+        functions[i].setBody(bytestr.readBytes(bodySize));
     }
 }
 
