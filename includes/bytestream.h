@@ -22,6 +22,7 @@ public:
     
     uint8_t readByte();
     std::vector<uint8_t> readBytes(int amount);
+    void setByteIndex(int index);
     bool atEnd() { return !(currentByteIndex < size); };
 
     std::string readASCIIString(int length);

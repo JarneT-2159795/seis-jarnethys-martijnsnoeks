@@ -69,6 +69,10 @@ std::vector<uint8_t> ByteStream::readBytes(int amount) {
     return bytes;
 }
 
+void ByteStream::setByteIndex(int index) {
+    currentByteIndex = index;
+}
+
 std::string ByteStream::readASCIIString(int length) {
     std::string s{""};
 
