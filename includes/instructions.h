@@ -11,9 +11,9 @@ const uint8_t GLOBAL_SECTION = 0x6;
 const uint8_t EXPORT_SECTION = 0x7;
 const uint8_t START_SECTION = 0x8;
 const uint8_t ELEMENT_SECTION = 0x9;
-const uint8_t CODE_SECTION = 0xa;
-const uint8_t DATA_SECTION = 0xb;
-const uint8_t DATACOUNT_SECTION = 0xc;
+const uint8_t CODE_SECTION = 0xA;
+const uint8_t DATA_SECTION = 0xB;
+const uint8_t DATACOUNT_SECTION = 0xC;
 
 // Variable types
 const uint8_t INT32 = 0x7F;
@@ -22,7 +22,10 @@ const uint8_t FLOAT32 = 0x7D;
 const uint8_t FLOAT64 = 0x7C;
 
 // Control instructions
+const uint8_t BLOCK = 0x2;
 const uint8_t CALL = 0x10;
+const uint8_t BR = 0xC;
+const uint8_t BR_IF = 0xD;
 
 // Variable instructions
 const uint8_t LOCALGET = 0x20;
@@ -34,7 +37,9 @@ const uint8_t I64CONST = 0x42;
 const uint8_t F32CONST = 0x43;
 const uint8_t F64CONST = 0x44;
 
-const int8_t I32GT_S = 0x4A;
+const uint8_t I32EQZ = 0x45;
+const uint8_t I32EQ = 0x46;
+const uint8_t I32GT_S = 0x4A;
 
 const uint8_t F64LT = 0x63;
 

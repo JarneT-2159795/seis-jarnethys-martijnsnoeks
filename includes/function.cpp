@@ -58,6 +58,7 @@ void Function::operator()(int offset) {
             break;
         case LOCALSET:
             stack->at(bs.readUInt32() + offset) = stack->back();
+            stack->pop_back();
             break;
         case I32CONST:
             stack->push_back(int32_t(bs.readInt32()));
@@ -71,6 +72,22 @@ void Function::operator()(int offset) {
         case F64CONST:
             stack->push_back(float64_t(bs.readFloat64()));
             break;
+        case I32EQZ:
+            {
+                int32_t var = std::get<int32_t>(stack->back());
+                stack->pop_back();
+                stack->push_back(int32_t(var == 0));
+                break;
+            }
+        case I32EQ:
+            {
+                int32_t var1 = std::get<int32_t>(stack->back());
+                stack->pop_back();
+                int32_t var2 = std::get<int32_t>(stack->back());
+                stack->pop_back();
+                stack->push_back(int32_t(var1 == var2));
+                break;
+            }
         case I32GT_S:
             {
                 int32_t var1 = std::get<int32_t>(stack->back());
