@@ -22,7 +22,7 @@ public:
     void operator()(int offset);
 
 private:
-    std::string name;
+    std::string name = "noName";
     std::vector<VariableType> params;
     std::vector<VariableType> localVars;
     std::vector<VariableType> results;
