@@ -49,7 +49,8 @@
         "streambuf": "cpp",
         "stack": "cpp",
         "any": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "map": "cpp"
     },
     "C_Cpp.default.cppStandard": "c++20"
 }
