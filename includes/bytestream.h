@@ -8,17 +8,18 @@
 
 class ByteStream {
 private:
-    uint8_t *buffer;
+    std::vector<uint8_t> buffer;
     int currentByteIndex;
     int size;
 
 public:
     ByteStream(std::string filepath);
     ByteStream(std::vector<uint8_t> stream);
-    ByteStream() : currentByteIndex{0}, buffer{ nullptr } {};
+    ByteStream() : currentByteIndex{0} {};
     ~ByteStream();
 
     void readFile(std::string filepath);
+    void readVector(std::vector<uint8_t> vector);
     
     uint8_t readByte();
     std::vector<uint8_t> readBytes(int amount);

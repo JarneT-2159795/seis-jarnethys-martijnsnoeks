@@ -14,30 +14,22 @@ ByteStream::ByteStream(std::string filepath) : currentByteIndex{ 0 } {
         size = f.tellg();
         f.seekg (0, f.beg);
 
-        buffer = new uint8_t[size];
-        f.read((char*)buffer, size);
+        buffer.reserve(size);
+        f.read((char*)buffer.data(), size);
     }
     f.close();
 }
 
 ByteStream::ByteStream(std::vector<uint8_t> stream) : currentByteIndex{ 0 } {
     size = stream.size();
-    buffer = new uint8_t[size];
-    for (int i = 0; i < size; ++i) {
-        buffer[i] = stream[i];
-    }
+    buffer = stream;
 }
 
 ByteStream::~ByteStream() {
-    if (buffer != nullptr) {
-        delete buffer;
-    }
 }
 
 void ByteStream::readFile(std::string filepath) {
-    if (buffer != nullptr) {
-        delete buffer;
-    }
+    buffer.clear();
     currentByteIndex = 0;
     std::ifstream f(filepath, std::ios::binary);
     if (f.is_open()) {
@@ -46,10 +38,17 @@ void ByteStream::readFile(std::string filepath) {
         size = f.tellg();
         f.seekg (0, f.beg);
 
-        buffer = new uint8_t[size];
-        f.read((char*)buffer, size);
+        buffer.reserve(size);
+        f.read((char*)buffer.data(), size);
     }
     f.close();
+}
+
+void ByteStream::readVector(std::vector<uint8_t> vector) {
+    buffer.clear();
+    currentByteIndex = 0;
+    size = vector.size();
+    buffer = vector;
 }
 
 uint8_t ByteStream::readByte() {
@@ -74,7 +73,7 @@ void ByteStream::setByteIndex(int index) {
 }
 
 std::string ByteStream::readASCIIString(int length) {
-    std::string s{""};
+    std::string s;
 
     for (int i = 0; i < length; ++i) {
         s += readByte();
