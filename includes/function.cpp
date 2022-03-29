@@ -1,6 +1,7 @@
 #include "function.h"
 #include <cstdarg>
 #include <iostream>
+#include <algorithm>
 
 Function::Function(std::vector<VariableType> paramaterList, std::vector<VariableType> resultList, std::vector<Variable> *globalStack, std::vector<Function> *moduleFunctions) 
             : params{ paramaterList }, results{ resultList }, stack{ globalStack }, functions{ moduleFunctions } {
@@ -24,6 +25,77 @@ void Function::setBody(std::vector<uint8_t> functionBody) {
     body = functionBody;
 }
 
+void Function::findJumps() {
+    enum class TYPE { IF, BLOCK };
+    auto origStack = stack;
+    std::vector<Variable> tempStack(*stack);
+    stack = &tempStack;
+    bs.readVector(body);
+    uint8_t byte;
+
+    std::vector<std::array<int, 2>> openIfJumps;
+    std::vector<int> openBlockJumps;
+    std::vector<TYPE> last;
+    std::array<int, 6> forbidden = { BR, BR_IF, BLOCK, IF, ELSE, CALL };
+    std::vector<int> dummy;
+    while (!bs.atEnd() && bs.getRemainingByteCount() > 1) {
+        byte = bs.readByte();
+        switch (byte) {
+            case BLOCK:
+                {
+                    printf("Found block\n");
+                    openBlockJumps.push_back(bs.getCurrentByteIndex());
+                    last.push_back(TYPE::BLOCK);
+                    break;
+                }
+            case IF:
+                {
+                    stack->pop_back();
+                    printf("Found if\n");
+                    std::array<int, 2> a;
+                    a[0] = bs.getCurrentByteIndex();
+                    openIfJumps.push_back(a);
+                    last.push_back(TYPE::IF);
+                    break;
+                }
+            case ELSE:
+                {
+                    printf("Found else\n");
+                    openIfJumps.back()[1] = bs.getCurrentByteIndex();
+                    bs.seek(-1);
+                    break;
+                }
+            case END:
+                {
+                    if (last.back() == TYPE::IF) {
+                        printf("Closed if\n");
+                        std::array<int, 2> a;
+                        a[0] = openIfJumps.back()[1];
+                        a[1] = bs.getCurrentByteIndex();
+                        ifJumps.insert(std::make_pair(openIfJumps.back()[0], a));
+                        openIfJumps.pop_back();
+                    } else if (last.back() == TYPE::BLOCK) {
+                        printf("Closed block\n");
+                        blockJumps[openBlockJumps.back()] = bs.getCurrentByteIndex();
+                        openBlockJumps.pop_back();
+                    }
+                    last.pop_back();
+                    break;
+                }
+
+            default:
+                break;
+        }
+        if (std::any_of(forbidden.begin(), forbidden.end(), [byte](int i){ return byte == i; })) {
+            bs.seek(1);
+        } else {
+            performOperation(byte, dummy, dummy);
+        }
+    }
+    stack = origStack;
+    jumpsCalculated = true;
+}
+
 void Function::operator()(int offset) {
     stackOffset = offset;
     for (auto par : localVars) {
@@ -42,22 +114,77 @@ void Function::operator()(int offset) {
                 break;
         }
     }
-    ByteStream bs(body);
+    if (!jumpsCalculated) {
+        findJumps();
+    }
+    
+    std::vector<int> jumpStack;
+    std::vector<int> ifStack;
+    bs.readVector(body);
     uint8_t byte;
     while (!bs.atEnd()) {
         byte = bs.readByte();
-        switch (byte) {
+        performOperation(byte, jumpStack, ifStack);
+    }
+}
+
+void Function::performOperation(uint8_t byte, std::vector<int> &jumpStack, std::vector<int> &ifStack) {
+    switch (byte) {
+        case BLOCK:
+            {
+                jumpStack.push_back(bs.getCurrentByteIndex());
+                bs.seek(1);
+                break;
+            }
+        case IF:
+            {
+                if (std::get<int32_t>(stack->back())) {
+                    ifStack.push_back(bs.getCurrentByteIndex());
+                    bs.seek(1); // Result type
+                } else {
+                    bs.setByteIndex(ifJumps[bs.getCurrentByteIndex()][0]);
+                }
+                break;
+            }
+        case ELSE:
+            {
+                bs.setByteIndex(ifJumps[ifStack.back()][1]);
+                break;
+            }
         case CALL:
             {
                 uint32_t funcIndex = bs.readUInt32();
                 functions->at(funcIndex).operator()(stack->size() - functions->at(funcIndex).getParams().size());
                 break;
             }
+        case BR:
+            {
+                int depth = bs.readUInt32();
+                bs.setByteIndex(blockJumps[jumpStack[jumpStack.size() - 1 - depth]]);
+                for (int i = 0; i < depth + 1; ++i) {
+                    jumpStack.pop_back();
+                }
+                break;
+            }
+        case BR_IF:
+            {
+                if (std::get<int32_t>(stack->back())) {
+                    int depth = bs.readUInt32();
+                    bs.setByteIndex(blockJumps[jumpStack[jumpStack.size() - 1 - depth]]);
+                    for (int i = 0; i < depth + 1; ++i) {
+                        jumpStack.pop_back();
+                    }
+                } else {
+                    bs.seek(1); // Break depth
+                }
+                stack->pop_back();
+                break;
+            }
         case LOCALGET:
-            stack->push_back(stack->at(bs.readUInt32() + offset));
+            stack->push_back(stack->at(bs.readUInt32() + stackOffset));
             break;
         case LOCALSET:
-            stack->at(bs.readUInt32() + offset) = stack->back();
+            stack->at(bs.readUInt32() + stackOffset) = stack->back();
             stack->pop_back();
             break;
         case I32CONST:
@@ -81,137 +208,137 @@ void Function::operator()(int offset) {
             }
         case I32EQ:
             {
-                int32_t var1 = std::get<int32_t>(stack->back());
-                stack->pop_back();
                 int32_t var2 = std::get<int32_t>(stack->back());
+                stack->pop_back();
+                int32_t var1 = std::get<int32_t>(stack->back());
                 stack->pop_back();
                 stack->push_back(int32_t(var1 == var2));
                 break;
             }
-        case I32GT_S:
+        case I32LT_S:
             {
-                int32_t var1 = std::get<int32_t>(stack->back());
-                stack->pop_back();
                 int32_t var2 = std::get<int32_t>(stack->back());
                 stack->pop_back();
-                stack->push_back(int32_t(var1 > var2));
+                int32_t var1 = std::get<int32_t>(stack->back());
+                stack->pop_back();
+                stack->push_back(int32_t(var1 < var2));
                 break;
             }
         case F64LT:
             {
-                float64_t var1 = std::get<float64_t>(stack->back());
-                stack->pop_back();
                 float64_t var2 = std::get<float64_t>(stack->back());
+                stack->pop_back();
+                float64_t var1 = std::get<float64_t>(stack->back());
                 stack->pop_back();
                 stack->push_back(int32_t(var1 < var2));
                 break;
             }
         case I32ADD:
             {
-                int32_t var1 = std::get<int32_t>(stack->back());
-                stack->pop_back();
                 int32_t var2 = std::get<int32_t>(stack->back());
+                stack->pop_back();
+                int32_t var1 = std::get<int32_t>(stack->back());
                 stack->pop_back();
                 stack->push_back(int32_t(var1 + var2));
                 break;
             }
         case I32SUB:
             {
-                int32_t var1 = std::get<int32_t>(stack->back());
-                stack->pop_back();
                 int32_t var2 = std::get<int32_t>(stack->back());
                 stack->pop_back();
-                stack->push_back(int32_t(var2 - var1));
+                int32_t var1 = std::get<int32_t>(stack->back());
+                stack->pop_back();
+                stack->push_back(int32_t(var1 - var2));
                 break;
             }
         case I32MUL:
             {
-                int32_t var1 = std::get<int32_t>(stack->back());
-                stack->pop_back();
                 int32_t var2 = std::get<int32_t>(stack->back());
+                stack->pop_back();
+                int32_t var1 = std::get<int32_t>(stack->back());
                 stack->pop_back();
                 stack->push_back(int32_t(var1 * var2));
                 break;
             }
         case I64ADD:
             {
-                int64_t var1 = std::get<int64_t>(stack->back());
-                stack->pop_back();
                 int64_t var2 = std::get<int64_t>(stack->back());
+                stack->pop_back();
+                int64_t var1 = std::get<int64_t>(stack->back());
                 stack->pop_back();
                 stack->push_back(int64_t(var1 + var2));
                 break;
             }
         case I64SUB:
             {
-                int64_t var1 = std::get<int64_t>(stack->back());
-                stack->pop_back();
                 int64_t var2 = std::get<int64_t>(stack->back());
                 stack->pop_back();
-                stack->push_back(int64_t(var2 - var1));
+                int64_t var1 = std::get<int64_t>(stack->back());
+                stack->pop_back();
+                stack->push_back(int64_t(var1 - var2));
                 break;
             }
         case I64MUL:
             {
-                int64_t var1 = std::get<int64_t>(stack->back());
-                stack->pop_back();
                 int64_t var2 = std::get<int64_t>(stack->back());
+                stack->pop_back();
+                int64_t var1 = std::get<int64_t>(stack->back());
                 stack->pop_back();
                 stack->push_back(int64_t(var1 * var2));
                 break;
             }
         case F32ADD:
             {
-                float32_t var1 = std::get<float32_t>(stack->back());
-                stack->pop_back();
                 float32_t var2 = std::get<float32_t>(stack->back());
+                stack->pop_back();
+                float32_t var1 = std::get<float32_t>(stack->back());
                 stack->pop_back();
                 stack->push_back(float32_t(var1 + var2));
                 break;
             }
         case F32SUB:
             {
-                float32_t var1 = std::get<float32_t>(stack->back());
-                stack->pop_back();
                 float32_t var2 = std::get<float32_t>(stack->back());
+                stack->pop_back();
+                float32_t var1 = std::get<float32_t>(stack->back());
                 stack->pop_back();
                 stack->push_back(float32_t(var2 - var1));
                 break;
             }
         case F32MUL:
             {
-                float32_t var1 = std::get<float32_t>(stack->back());
-                stack->pop_back();
                 float32_t var2 = std::get<float32_t>(stack->back());
+                stack->pop_back();
+                float32_t var1 = std::get<float32_t>(stack->back());
                 stack->pop_back();
                 stack->push_back(float32_t(var1 * var2));
                 break;
             }
         case F64ADD:
             {
-                float64_t var1 = std::get<float64_t>(stack->back());
-                stack->pop_back();
                 float64_t var2 = std::get<float64_t>(stack->back());
+                stack->pop_back();
+                float64_t var1 = std::get<float64_t>(stack->back());
                 stack->pop_back();
                 stack->push_back(float64_t(var1 + var2));
                 break;
             }
         case F64SUB:
             {
-                float64_t var1 = std::get<float64_t>(stack->back());
-                stack->pop_back();
                 float64_t var2 = std::get<float64_t>(stack->back());
                 stack->pop_back();
-                stack->push_back(float64_t(var1 + var2));
+                float64_t var1 = std::get<float64_t>(stack->back());
+                stack->pop_back();
+                stack->push_back(float64_t(var1 - var2));
                 break;
             }
         case F64MUL:
             {
-                float64_t var1 = std::get<float64_t>(stack->back());
-                stack->pop_back();
                 float64_t var2 = std::get<float64_t>(stack->back());
                 stack->pop_back();
-                stack->push_back(float64_t(var1 + var2));
+                float64_t var1 = std::get<float64_t>(stack->back());
+                stack->pop_back();
+                stack->push_back(float64_t(var1 * var2));
                 break;
             }
         case END:
@@ -221,5 +348,4 @@ void Function::operator()(int offset) {
             throw FunctionException("Invalid or unsupported instuction", byte);
             break;
         }
-    }
 }
