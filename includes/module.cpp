@@ -60,10 +60,11 @@ std::vector<Function> Module::getFunctions() {
 }
 
 void Module::operator()(std::string name, std::vector<Variable> vars) {
-    for (auto func : functions) {
-        if (func.getName() == name) {
+    for (int i = 0; i < functions.size(); ++i) {
+        Function *func = &functions.at(i);
+        if (func->getName() == name) {
             stack.insert(stack.end(), vars.begin(), vars.end());
-            func(stack.size() - func.getParams().size());
+            (*func)(stack.size() - func->getParams().size());
             return;
         }
     }
