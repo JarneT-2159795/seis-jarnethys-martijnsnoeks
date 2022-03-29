@@ -8,7 +8,7 @@
 
 ## Basics: reading a binary file in C++
 
-The following code reads the contents of a binary file one byte at a time and stores these in a std::vector. The bytes can be read using the readByte-function. This will return the next byte in the stream or a out of range-exception when there are no more bytes.
+The following code reads the contents of a binary file one byte at a time and stores these in a std::vector. The bytes can be read using the readByte-function. This will return the next byte in the stream or a out of range-exception when there are no more bytes. The full code can be found on [Github in the ByteStream class](https://github.com/JarneT-2159795/seis-jarnethys-martijnsnoeks/blob/main/includes/bytestream.cpp).
 
 ```c++
 
@@ -40,7 +40,9 @@ uint8_t ByteStream::readByte() {
 
 #### Encoding unsigned integers
 
-Integers in WebAssembly are Little Endian Base 128 (LEB128) encoded. This is a way to store integers with a variable amount of bits, thus using less memory. Before decoding the integers it's important to understand how they are encoded. We'll explain this with the number 147258 which is represented as BAFE08 in LEB128. The steps for encoding an unsigned integer using two's complement are as follows:
+Integers in WebAssembly are Little Endian Base 128 (LEB128) encoded. This is a way to store integers with a variable amount of bits, thus using less memory. For more information you can visit [Wikipedia](https://en.wikipedia.org/wiki/LEB128).
+
+Before decoding the integers it's important to understand how they are encoded. We'll explain this with the number 147258 which is represented as BAFE08 in LEB128. The steps for encoding an unsigned integer using two's complement are as follows:
 
 1. Convert the positive number to binary
 2. Add zeros to the left so you end op with a multiple of seven bits
@@ -213,6 +215,159 @@ std::string ByteStream::readASCIIString(int length) {
     }
 
     return s;
+}
+
+```
+
+## Structure of a binary WebAssembly file
+
+The following code will read the contents of a binary file and parse it so the functions can be used in C++. A binary file consists of different sections, each describing a different part of the code. Each section needs to be parsed and the information stored in the right function so it can be used later when we want to call a function. The full code for this part can be found on [Github in the Module class](https://github.com/JarneT-2159795/seis-jarnethys-martijnsnoeks/blob/main/includes/module.cpp). For the following examples we will use the following WebAssembly code:
+
+```javascript
+
+(module
+  (func (export "addTwo") (param i32 i32) (result i32)
+    local.get 0
+    local.get 1
+    i32.add
+  )
+)
+
+```
+
+We can use the build output to see how each section is represented in the final binary file. Here is the output for the code above:
+
+```
+
+0000000: 0061 736d                                 ; WASM_BINARY_MAGIC
+0000004: 0100 0000                                 ; WASM_BINARY_VERSION
+; section "Type" (1)
+0000008: 01                                        ; section code
+0000009: 00                                        ; section size (guess)
+000000a: 01                                        ; num types
+; func type 0
+000000b: 60                                        ; func
+000000c: 02                                        ; num params
+000000d: 7f                                        ; i32
+000000e: 7f                                        ; i32
+000000f: 01                                        ; num results
+0000010: 7f                                        ; i32
+0000009: 07                                        ; FIXUP section size
+; section "Function" (3)
+0000011: 03                                        ; section code
+0000012: 00                                        ; section size (guess)
+0000013: 01                                        ; num functions
+0000014: 00                                        ; function 0 signature index
+0000012: 02                                        ; FIXUP section size
+; section "Export" (7)
+0000015: 07                                        ; section code
+0000016: 00                                        ; section size (guess)
+0000017: 01                                        ; num exports
+0000018: 06                                        ; string length
+0000019: 6164 6454 776f                           addTwo  ; export name
+000001f: 00                                        ; export kind
+0000020: 00                                        ; export func index
+0000016: 0a                                        ; FIXUP section size
+; section "Code" (10)
+0000021: 0a                                        ; section code
+0000022: 00                                        ; section size (guess)
+0000023: 01                                        ; num functions
+; function body 0
+0000024: 00                                        ; func body size (guess)
+0000025: 00                                        ; local decl count
+0000026: 20                                        ; local.get
+0000027: 00                                        ; local index
+0000028: 20                                        ; local.get
+0000029: 01                                        ; local index
+000002a: 6a                                        ; i32.add
+000002b: 0b                                        ; end
+0000024: 07                                        ; FIXUP func body size
+0000022: 09                                        ; FIXUP section size
+
+```
+
+### Type section
+
+This section stores information about function types. This consists of the amount of parameters and amount of results and their respective types. The code to parse this section is as follows:
+
+```c++
+
+void Module::readTypeSection(int length) {
+    while(bytestr.readByte() == 0x60) { // 0x60 indicates a function type
+        int numParams = bytestr.readByte(); // Read the amount of parameters
+        std::vector<VariableType> params;
+        for (int i = 0; i < numParams; ++i) {
+            params.push_back(getVarType(bytestr.readByte())); // Store the type of the parameter
+        }
+
+        int numResults = bytestr.readByte(); // Read the amount of results
+        std::vector<VariableType> results;
+        for (int i = 0; i < numResults; ++i) {
+            results.push_back(getVarType(bytestr.readByte())); // Store the type of the result
+        }
+        // Add the parameters and results to the function
+        functionTypes.push_back(params);
+        functionTypes.push_back(results);
+    }
+    bytestr.seek(-1);
+}
+
+```
+
+### Function section
+
+This is a relatively short section as we only have to read the function type for each function and store this in the function. The byte code starts with the number of functions in the module. For each function there is an integer saved which is the index of the function index which we decoded in the function type section.
+
+```c++
+
+void Module::readFunctionSection(int length) {
+    int numFunctions = bytestr.readByte(); // The amount of functions in the module
+    for (int i = 0; i < numFunctions; ++i) {
+        // Read the type of the function
+        int signature = 2 * bytestr.readByte(); // We store the parameters and results behind each other so we multiply by two
+        functions.emplace_back(Function(functionTypes[signature], functionTypes[signature + 1], &stack, &functions)); // Add the function
+    }
+}
+
+```
+
+### Export section
+
+The export section 
+
+```c++
+
+void Module::readExportSection(int length) {
+    int exports = bytestr.readByte(); // Amount of function names
+    for (int i = 0; i < exports; ++i) {
+        auto name = bytestr.readASCIIString(bytestr.readByte()); // Read the name with the given length
+        bytestr.seek(1); // Export kind
+        functions[bytestr.readUInt32()].setName(name); // Set the name for the function with the given index
+    }
+}
+
+```
+
+### Code section
+
+The code section contains the actual instructions for the program to function. First we read the amount of functions in the module. For each function we save the size of the body with the instructions. This section also contains the local variables for each function. We save these now so it's already done when we want to run the function. The amount of local variables is removed from the function body. For each local variable we read it's type and save it in the function. We first read how many variables of a given type are in the function. After this we read the type of the local variable and add the type and amount to the function.
+
+```c++
+
+void Module::readCodeSection(int length) {
+    int numFunctions = bytestr.readByte(); // Amount of functions
+    for (int i = 0; i < numFunctions; ++i) {
+        // Amount of bytes for the body of the function
+        int bodySize = bytestr.readByte() - 1;  // -1 for localVarType
+        int localVarTypes = bytestr.readByte(); // Amount of local variables
+        for (int j = 0; j < localVarTypes; ++j) {
+            int typeCount = bytestr.readByte(); // Read the amount of variables from this type
+            functions[i].addLocalVars(getVarType(bytestr.readByte()), typeCount); // Add the type and the amount of this type to the function
+            bodySize -= 2;  // -2 for every local variable
+        }
+
+        functions[i].setBody(bytestr.readBytes(bodySize)); // The remaining bytes are the actual instructions
+    }
 }
 
 ```
