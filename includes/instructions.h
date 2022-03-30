@@ -23,6 +23,8 @@ const uint8_t FLOAT64 = 0x7C;
 
 // Control instructions
 const uint8_t BLOCK = 0x2;
+const uint8_t IF = 0x4;
+const uint8_t ELSE = 0x5;
 const uint8_t CALL = 0x10;
 const uint8_t BR = 0xC;
 const uint8_t BR_IF = 0xD;
@@ -39,7 +41,7 @@ const uint8_t F64CONST = 0x44;
 
 const uint8_t I32EQZ = 0x45;
 const uint8_t I32EQ = 0x46;
-const uint8_t I32GT_S = 0x4A;
+const uint8_t I32LT_S = 0x48;
 
 const uint8_t F64LT = 0x63;
 

@@ -1,6 +1,8 @@
 #include <vector>
 #include <variant>
 #include <exception>
+#include <array>
+#include <unordered_map>
 #include "bytestream.h"
 #include "instructions.h"
 
@@ -27,10 +29,15 @@ private:
     std::vector<VariableType> localVars;
     std::vector<VariableType> results;
     std::vector<uint8_t> body;
-
+    std::unordered_map<int, std::array<int, 2>> ifJumps;
+    std::unordered_map<int, int> blockJumps;
     int stackOffset = 0;
     std::vector<Variable> *stack;
     std::vector<Function> *functions;
+    ByteStream bs;
+    void performOperation(uint8_t byte, std::vector<int> &jumpStack, std::vector<int> &ifStack);
+    bool jumpsCalculated = false;
+    void findJumps();
 };
 
 struct FunctionException : public std::exception
