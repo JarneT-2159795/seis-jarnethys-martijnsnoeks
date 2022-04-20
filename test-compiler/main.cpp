@@ -10,24 +10,24 @@ using namespace std;
 
 int main()
 {
-    cout << "TESTING " << endl;
+    std::cout << "TESTING " << std::endl;
 
 	Lexer lexer = Lexer{"./test.wat"};
 
     int err = lexer.lex();
 
-    cout << "DONE LEXING " << endl;
+    std::cout << "DONE LEXING " << std::endl;
 
     Parser parser = Parser(&lexer);
 
     ByteStream* compiledOutput = parser.parseSimple();
-    // std::vector<Instruction*> AST = parser.parseProper();
+    std::vector<Instruction*> AST = parser.parseProper();
     
-    // cout << "DONE PARSING " << endl;
+    std::cout << "DONE PARSING " << std::endl;
 
-    // Compiler compiler = Compiler(AST);
-    // ByteStream* compiledOutput = compiler.compile();
+    Compiler compiler = Compiler(AST);
+    compiledOutput = compiler.compile();
 
-    // cout << "DONE COMPILING " << endl;
+    std::cout << "DONE COMPILING " << std::endl;
 }
 

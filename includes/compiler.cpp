@@ -32,7 +32,7 @@ ByteStream* Compiler::compile()
 
     int writtenByteCount = output->getCurrentByteIndex() - 1; // -1 because byteIndex is ready to write a new byte now!
 
-	output->seek(0);
+	output->setByteIndex(0);
 
 	std::cout << "Nr bytes written " << writtenByteCount << std::endl;
 
