@@ -26,7 +26,7 @@ int Lexer::lex()
 	while( !this->byteStream->end() ) {
 
         while( Character::isWhitespace( this->byteStream->peekByte() ) ) {
-            this->byteStream->readByte();
+            this->byteStream->seek(1);
         }
 
         unsigned char nextChar = this->byteStream->peekByte();

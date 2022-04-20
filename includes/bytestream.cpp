@@ -26,7 +26,7 @@ ByteStream::ByteStream(std::vector<uint8_t> stream) : currentByteIndex{ 0 } {
 }
 
 bool ByteStream::end() {
-    return false;
+    return currentByteIndex >= size;
 }
 
 ByteStream::~ByteStream() {
