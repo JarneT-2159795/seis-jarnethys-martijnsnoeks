@@ -22,7 +22,7 @@ void Stack::push(Variable variable){
     return;
 }
 
-Variable Stack::at(int index){
+Variable& Stack::at(int index){
     return vector.at(index);
 }
 

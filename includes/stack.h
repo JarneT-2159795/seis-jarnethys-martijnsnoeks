@@ -16,7 +16,7 @@ public:
     Variable pop();
     int size();
     void push(Variable var);
-    Variable at(int index);
+    Variable& at(int index);
     Variable back();
     void printAll();
 };
