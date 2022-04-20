@@ -16,6 +16,7 @@ public:
     ByteStream(std::string filepath);
     ByteStream(std::vector<uint8_t> stream);
     ByteStream() : currentByteIndex{0} {};
+    void end();
     ~ByteStream();
 
     void readFile(std::string filepath);
@@ -23,8 +24,11 @@ public:
     
     uint8_t readByte();
     std::vector<uint8_t> readBytes(int amount);
+    uint8_t peekByte();
     void setByteIndex(int index);
     bool atEnd() { return !(currentByteIndex < size); };
+
+    void writeUInt32(uint32_t value);
 
     std::string readASCIIString(int length);
 

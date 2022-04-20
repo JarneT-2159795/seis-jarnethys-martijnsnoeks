@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include "bytestream.h"
 #include "instructions.h"
+#include "stack.h"
 
 #define float32_t float
 #define float64_t double
@@ -14,7 +15,7 @@ typedef std::variant<int32_t, int64_t, float32_t, float64_t> Variable;
 
 class Function {
 public:
-    Function(std::vector<VariableType> paramaterList, std::vector<VariableType> resultList, std::vector<Variable> *moduleStack, std::vector<Function> *moduleFunctions);
+    Function(std::vector<VariableType> paramaterList, std::vector<VariableType> resultList, Stack *moduleStack, std::vector<Function> *moduleFunctions);
     void setName(std::string functionName);
     std::string getName();
     std::vector<VariableType> getParams() { return params; };
@@ -32,7 +33,7 @@ private:
     std::unordered_map<int, std::array<int, 2>> ifJumps;
     std::unordered_map<int, int> blockJumps;
     int stackOffset = 0;
-    std::vector<Variable> *stack;
+    Stack *stack;
     std::vector<Function> *functions;
     ByteStream bs;
     void performOperation(uint8_t byte, std::vector<int> &jumpStack, std::vector<int> &ifStack);

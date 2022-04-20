@@ -59,11 +59,13 @@ std::vector<Function> Module::getFunctions() {
     return functions;
 }
 
-void Module::operator()(std::string name, std::vector<Variable> vars) {
+void Module::operator()(std::string name, Stack vars) {
     for (int i = 0; i < functions.size(); ++i) {
         Function *func = &functions.at(i);
         if (func->getName() == name) {
-            stack.insert(stack.end(), vars.begin(), vars.end());
+            for (int i = 0; i < vars.size(); ++i) {
+                stack.push(vars.at(i));
+            }
             (*func)(stack.size() - func->getParams().size());
             return;
         }
@@ -73,20 +75,20 @@ void Module::operator()(std::string name, std::vector<Variable> vars) {
 
 void Module::printVariables(int amount) {
     for (int i = amount; i > 0; --i) {
-        auto var = &stack.at(stack.size() - i);
-        switch (var->index())
+        auto var = stack.at(stack.size() - i);
+        switch (var.index())
         {
         case 0:
-            std::cout << std::get<int32_t>(*var) << " ";
+            std::cout << std::get<int32_t>(var) << " ";
             break;
         case 1:
-            std::cout << std::get<int64_t>(*var) << " ";
+            std::cout << std::get<int64_t>(var) << " ";
             break;
         case 2:
-            std::cout << std::get<float32_t>(*var) << " ";
+            std::cout << std::get<float32_t>(var) << " ";
             break;
         case 3:
-            std::cout << std::get<float64_t>(*var) << " ";
+            std::cout << std::get<float64_t>(var) << " ";
             break;
         default:
             break;

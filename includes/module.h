@@ -4,12 +4,12 @@ class Module {
 public:
     Module(std::string filepath);
     std::vector<Function> getFunctions();
-    void operator()(std::string name, std::vector<Variable> vars);
+    void operator()(std::string name, Stack vars);
     void printVariables(int amount);
 
 private:
     ByteStream bytestr;
-    std::vector<Variable> stack;
+    Stack stack;
     std::vector<std::vector<VariableType>> functionTypes;
     std::vector<Function> functions;
 

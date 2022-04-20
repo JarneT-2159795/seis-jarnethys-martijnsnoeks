@@ -12,9 +12,9 @@ int main() {
 
     while (choice > -1 && choice < funcs.size()) {
         std::string func = funcs[choice].getName();
-        std::vector<Variable> vars;
+        Stack vars;
         for (auto param : funcs[choice].getParams()) {
-            vars.push_back(getVariable(param));
+            vars.push(getVariable(param));
         }
         module(func, vars);
         std::cout << "Results: ";

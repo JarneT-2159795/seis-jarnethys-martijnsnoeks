@@ -68,8 +68,22 @@ std::vector<uint8_t> ByteStream::readBytes(int amount) {
     return bytes;
 }
 
+uint8_t ByteStream::peekByte() {
+    if (atEnd()) {
+        throw std::out_of_range("ByteStream at end of stream");
+    }
+    return buffer[currentByteIndex];
+}
+
 void ByteStream::setByteIndex(int index) {
     currentByteIndex = index;
+}
+
+void ByteStream::writeUInt32(uint32_t value) {
+    buffer.push_back((value >> 24) & 0xFF);
+    buffer.push_back((value >> 16) & 0xFF);
+    buffer.push_back((value >> 8) & 0xFF);
+    buffer.push_back(value & 0xFF);
 }
 
 std::string ByteStream::readASCIIString(int length) {

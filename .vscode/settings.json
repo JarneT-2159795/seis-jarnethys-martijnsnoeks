@@ -50,7 +50,9 @@
         "stack": "cpp",
         "any": "cpp",
         "variant": "cpp",
-        "map": "cpp"
+        "map": "cpp",
+        "cstring": "cpp",
+        "cinttypes": "cpp"
     },
     "C_Cpp.default.cppStandard": "c++20"
 }
