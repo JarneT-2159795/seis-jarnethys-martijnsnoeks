@@ -4,7 +4,7 @@
 #include <array>
 #include <unordered_map>
 #include "bytestream.h"
-#include "instructions.h"
+#include "constants.h"
 #include "stack.h"
 
 #define float32_t float

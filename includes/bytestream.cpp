@@ -25,6 +25,10 @@ ByteStream::ByteStream(std::vector<uint8_t> stream) : currentByteIndex{ 0 } {
     buffer = stream;
 }
 
+bool ByteStream::end() {
+    return false;
+}
+
 ByteStream::~ByteStream() {
 }
 
@@ -80,10 +84,12 @@ void ByteStream::setByteIndex(int index) {
 }
 
 void ByteStream::writeUInt32(uint32_t value) {
-    buffer.push_back((value >> 24) & 0xFF);
-    buffer.push_back((value >> 16) & 0xFF);
-    buffer.push_back((value >> 8) & 0xFF);
-    buffer.push_back(value & 0xFF);
+    // write LEB128 UInt32
+    uint32_t v = value;
+    while (v >= 0x80) {
+        buffer.push_back((v & 0x7f) | 0x80);
+        v >>= 7;
+    }
 }
 
 std::string ByteStream::readASCIIString(int length) {

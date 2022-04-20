@@ -3,6 +3,9 @@
 #include <vector>
 #include <utility>
 
+#ifndef __BYTESTREAM_H__
+#define __BYTESTREAM_H__
+
 #define float32_t float
 #define float64_t double
 
@@ -16,7 +19,7 @@ public:
     ByteStream(std::string filepath);
     ByteStream(std::vector<uint8_t> stream);
     ByteStream() : currentByteIndex{0} {};
-    void end();
+    bool end();
     ~ByteStream();
 
     void readFile(std::string filepath);
@@ -55,3 +58,4 @@ public:
     void printBinary(float32_t val);
     void printBinary(float64_t val);
 };
+#endif // __BYTESTREAM_H__
