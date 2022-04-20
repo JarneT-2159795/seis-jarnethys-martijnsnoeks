@@ -126,6 +126,7 @@ void Function::operator()(int offset) {
         byte = bs.readByte();
         performOperation(byte, jumpStack, ifStack);
     }
+    stack->printAll();
 }
 
 void Function::performOperation(uint8_t byte, std::vector<int> &jumpStack, std::vector<int> &ifStack) {
