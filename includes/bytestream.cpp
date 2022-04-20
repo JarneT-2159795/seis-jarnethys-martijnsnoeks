@@ -86,20 +86,19 @@ void ByteStream::setByteIndex(int index) {
 void ByteStream::writeByte(uint8_t byte){
     // TODO: error handling!
     buffer[ currentByteIndex ] = byte;
-    (currentByteIndex)++;
+    currentByteIndex++;
 }
 
 void ByteStream::writeUInt32(uint32_t val) {
     do {
-    unsigned char byte = val & 0x7f;
-    val >>= 7;
+        unsigned char byte = val & 0x7f;
+        val >>= 7;
 
-    if (val != 0)
-      byte |= 0x80;  // mark this byte to show that more bytes will follow
+        if (val != 0)
+            byte |= 0x80;  // mark this byte to show that more bytes will follow
 
-    writeByte(byte);
-  } 
-  while (val != 0);
+        writeByte(byte);
+    } while (val != 0);
 }
 
 std::string ByteStream::readASCIIString(int length) {

@@ -61,9 +61,9 @@ ByteStream* Parser::parseSimple()
 		// especially the "end" of the function should be derived from its ending BRACKET_CLOSED, not an actual "end" statement
 	}
 
-	int writtenByteCount = output->getTotalByteCount() - 1; // -1 because byteIndex is ready to write a new byte now!
+	int writtenByteCount = output->getCurrentByteIndex() - 1; // -1 because byteIndex is ready to write a new byte now!
 
-	output->seek(0);
+	output->setByteIndex(0);
 
 	std::cout << "Nr bytes written " << writtenByteCount << std::endl;
 
