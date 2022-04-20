@@ -31,6 +31,7 @@ public:
     void setByteIndex(int index);
     bool atEnd() { return !(currentByteIndex < size); };
 
+    void writeByte(uint8_t byte);
     void writeUInt32(uint32_t value);
 
     std::string readASCIIString(int length);

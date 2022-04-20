@@ -27,7 +27,6 @@ ByteStream* Parser::parseSimple()
 	// HACK: assume that only starts with the first valid "operation" we get
 	// TODO: properly parse everything
 	bool HACK_inCodeBlock = false;
-
 	for ( auto token : tokens ) {
 		if ( token.type == TokenType::KEYWORD ) {
 			InstructionNumber::Operation op = InstructionNumber::getOperation( token.string_value );
@@ -62,17 +61,17 @@ ByteStream* Parser::parseSimple()
 		// especially the "end" of the function should be derived from its ending BRACKET_CLOSED, not an actual "end" statement
 	}
 
-	int writtenByteCount = output->getCurrentByteIndex() - 1; // -1 because byteIndex is ready to write a new byte now!
+	int writtenByteCount = output->getTotalByteCount() - 1; // -1 because byteIndex is ready to write a new byte now!
 
 	output->seek(0);
 
-	cout << "Nr bytes written " << writtenByteCount << endl;
+	std::cout << "Nr bytes written " << writtenByteCount << std::endl;
 
 	int c = 0;
 	while( c <= writtenByteCount ) { 
 		unsigned char byte = output->readByte();
 
-		cout << std::hex << std::setw(2) << std::setfill('0') << (int) byte << std::dec << endl;
+		std::cout << std::hex << std::setw(2) << std::setfill('0') << (int) byte << std::dec << std::endl;
 
 		++c;
 	}
@@ -105,7 +104,7 @@ std::vector<Instruction*> Parser::parseProper()
 		if ( token.type == TokenType::KEYWORD ) {
 			InstructionNumber::Operation op = InstructionNumber::getOperation( token.string_value );
 			
-			// cout << "Parser::ParseProper : token : " << token.string_value << " maps to " << (int) op << endl;
+			// std::cout << "Parser::ParseProper : token : " << token.string_value << " maps to " << (int) op << std::endl;
 
 			if ( op != InstructionNumber::Operation::NONE ) {
 				HACK_inCodeBlock = true;
@@ -137,7 +136,7 @@ std::vector<Instruction*> Parser::parseProper()
 					output.push_back( instruction );
 				}
 				else {
-					cout << "Parser::ParseProper : unsupported operation found : " << (int) op << endl;
+					std::cout << "Parser::ParseProper : unsupported operation found : " << (int) op << std::endl;
 				}
 
 			}
@@ -163,12 +162,12 @@ std::vector<Instruction*> Parser::parseProper()
 				continue;
 			}
 
-			cout << "Parser::ParseProper : unsupported TokenType found : " << (int) token.type << " for " << token.uint32_value << " OR " << token.string_value << endl;
+			std::cout << "Parser::ParseProper : unsupported TokenType found : " << (int) token.type << " for " << token.uint32_value << " OR " << token.string_value << std::endl;
 		}
 	}
 
 	for ( auto instruction : output ) {
-		cout << "Instruction " << (int) instruction->type << " for operation " << instruction->instruction_code << " with potential parameter " << instruction->parameter << endl;
+		std::cout << "Instruction " << (int) instruction->type << " for operation " << instruction->instruction_code << " with potential parameter " << instruction->parameter << std::endl;
 	}
 
 	return output;
