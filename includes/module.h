@@ -7,6 +7,7 @@ public:
     std::vector<Function> getFunctions();
     void operator()(std::string name, Stack vars);
     void printVariables(int amount);
+    std::vector<Variable> getResults(int amount);
 
 private:
     ByteStream bytestr;

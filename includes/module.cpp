@@ -105,6 +105,14 @@ void Module::printVariables(int amount) {
     std::cout << std::endl;
 }
 
+std::vector<Variable> Module::getResults(int amount) {
+    std::vector<Variable> results;
+    for (int i = amount; i > 0; --i) {
+        results.push_back(stack.at(stack.size() - i));
+    }
+    return results;
+}
+
 VariableType Module::getVarType(uint8_t type) {
     switch (type) {
             case INT32:
