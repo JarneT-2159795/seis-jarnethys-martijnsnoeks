@@ -1,0 +1,16 @@
+name = "vm-worker"
+type = "webpack"
+zone_id = ""
+account_id = "86bb9b0b6d5301d99aa836c626b3201e"
+route = ""
+workers_dev = true
+webpack_config = "webpack.config.js"
+compatibility_date = "2022-04-28"
+
+kv_namespaces = [ 
+  { binding = "FILES", id = "de3f4864409e41ac999a649da34460c3", preview_id = "de3f4864409e41ac999a649da34460c3" },
+]
+
+[site]
+bucket = "./assets"
+entry-point = "./workers-site"

@@ -3,6 +3,9 @@
 
 extern "C" {
     int useModule(uint8_t *data, int size, int *input);
+    int testPrint() {
+        return rand();
+    }
 }
 
 int main() {
@@ -17,7 +20,6 @@ int useModule(uint8_t *data, int size, int *input) {
         return -1;
     }
     ByteStream bs;
-    std::cout << "Hello, World!\nStarting Module..." << std::endl;
     Module module{data, size};
     auto funcs = module.getFunctions();
     int choice = 0;
@@ -29,11 +31,8 @@ int useModule(uint8_t *data, int size, int *input) {
             vars.push(input[i]);
         }
         module(func, vars);
-        std::cout << "Expected result: " << input[0] + input[1] << std::endl;
-        std::cout << "Result: ";
-        module.printVariables(funcs[choice].getResults().size());
-        std::cout << "\n\n" << std::endl;
-        break;
+        auto result = std::get<int>(module.getResults(funcs[choice].getResults().size())[0]);
+        return result;
     }
-    return 0;
+    return -1;
 }
