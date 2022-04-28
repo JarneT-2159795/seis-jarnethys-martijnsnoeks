@@ -18,6 +18,7 @@ private:
 public:
     ByteStream(std::string filepath);
     ByteStream(std::vector<uint8_t> stream);
+    ByteStream(uint8_t *data, int size);
     ByteStream() : currentByteIndex{0} {};
     bool end();
     ~ByteStream();

@@ -3,6 +3,7 @@
 class Module {
 public:
     Module(std::string filepath);
+    Module(uint8_t *data, int size);
     std::vector<Function> getFunctions();
     void operator()(std::string name, Stack vars);
     void printVariables(int amount);
@@ -15,6 +16,7 @@ private:
 
     VariableType getVarType(uint8_t type);
 
+    void parse();
     void readTypeSection(int length);
     void readImportSection(int length);
     void readFunctionSection(int length);

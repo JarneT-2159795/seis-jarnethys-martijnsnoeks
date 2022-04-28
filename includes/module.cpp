@@ -3,6 +3,14 @@
 #include <cstdarg>
 
 Module::Module(std::string filepath) : bytestr{filepath} {
+    parse();
+}
+
+Module::Module(uint8_t *data, int size) : bytestr{data, size} {
+    parse();
+}
+
+void Module::parse() {
     bytestr.seek(8);    // Magic and version number
     uint8_t section;
     while (!bytestr.atEnd() && bytestr.getRemainingByteCount() > 1) {

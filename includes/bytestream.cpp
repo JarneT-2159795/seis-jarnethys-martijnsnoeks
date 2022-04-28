@@ -25,6 +25,14 @@ ByteStream::ByteStream(std::vector<uint8_t> stream) : currentByteIndex{ 0 } {
     buffer = stream;
 }
 
+ByteStream::ByteStream(uint8_t *data, int size) : currentByteIndex{ 0 } {
+    this->size = size;
+    buffer.reserve(size);
+    for (int i = 0; i < size; i++) {
+        buffer.push_back(data[i]);
+    }
+}
+
 bool ByteStream::end() {
     return atEnd();
 }
