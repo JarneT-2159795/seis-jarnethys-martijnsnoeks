@@ -10,8 +10,16 @@ edge-local:
 	wat2wasm --enable-multi-value code.wat
 	rm build_edge/ -rf
 	mkdir build_edge
-	cd build_edge && em++ ../main.cpp ../../includes/*.cpp -std=c++2a --no-entry -O2 -s WASM=1 -s EXPORTED_FUNCTIONS="[_useModule, _testPrint]" -s ALLOW_MEMORY_GROWTH=1 -s DYNAMIC_EXECUTION=0 -s TEXTDECODER=0 -s MODULARIZE=1 -s ENVIRONMENT='web'   -s EXPORT_NAME="WASMModule" --pre-js '../pre.js' -o test.js || exit 1
+	cd build_edge && em++ ../main.cpp ../../includes/*.cpp -std=c++2a --no-entry -O2 -s WASM=1 -s EXPORTED_FUNCTIONS="[_useModule, _randomInt]" -s ALLOW_MEMORY_GROWTH=1 -s DYNAMIC_EXECUTION=0 -s TEXTDECODER=0 -s MODULARIZE=1 -s ENVIRONMENT='web' -s EXPORT_NAME="WASMModule" --pre-js '../pre.js' -o test.js || exit 1
 	cp build_edge/test.js vm-worker/build/test.js
 	cp build_edge/test.wasm vm-worker/build/test.wasm
-	cp code.wasm vm-worker/build/code.wasm
 	cd vm-worker && wrangler dev
+
+edge-publish:
+	wat2wasm --enable-multi-value code.wat
+	rm build_edge/ -rf
+	mkdir build_edge
+	cd build_edge && em++ ../main.cpp ../../includes/*.cpp -std=c++2a --no-entry -O2 -s WASM=1 -s EXPORTED_FUNCTIONS="[_useModule, _randomInt]" -s ALLOW_MEMORY_GROWTH=1 -s DYNAMIC_EXECUTION=0 -s TEXTDECODER=0 -s MODULARIZE=1 -s ENVIRONMENT='web' -s EXPORT_NAME="WASMModule" --pre-js '../pre.js' -o test.js || exit 1
+	cp build_edge/test.js vm-worker/build/test.js
+	cp build_edge/test.wasm vm-worker/build/test.wasm
+	cd vm-worker && wrangler publish

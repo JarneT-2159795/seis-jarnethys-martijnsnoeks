@@ -6,11 +6,3 @@ route = ""
 workers_dev = true
 webpack_config = "webpack.config.js"
 compatibility_date = "2022-04-28"
-
-kv_namespaces = [ 
-  { binding = "FILES", id = "de3f4864409e41ac999a649da34460c3", preview_id = "de3f4864409e41ac999a649da34460c3" },
-]
-
-[site]
-bucket = "./assets"
-entry-point = "./workers-site"

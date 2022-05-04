@@ -1,38 +1,84 @@
 #include "../includes/module.h"
 #include <iostream>
+#include <time.h>
 
 extern "C" {
-    int useModule(uint8_t *data, int size, int *input);
-    int testPrint() {
+    int useModule(uint8_t *data, int size, char* name, int32_t *int32Input, int64_t *int64Input, float32_t *float32Input, float64_t *float64Input,
+                    int32_t *int32Output, int64_t *int64Output, float32_t *float32Output, float64_t *float64Output);
+    int randomInt() {
+        srand(time(0));
         return rand();
     }
 }
 
-int main() {
-    std::cout << "Call useModule(uint8_t *data, int size)" << std::endl;
-    return 0;
-}
-
-
-int useModule(uint8_t *data, int size, int *input) {
+int useModule(uint8_t *data, int size, char *name, int32_t *int32Input, int64_t *int64Input, float32_t *float32Input, float64_t *float64Input,
+                int32_t *int32Output, int64_t *int64Output, float32_t *float32Output, float64_t *float64Output) {
     if (size < 1) {
         std::cout << "Error: No data received" << std::endl;
         return -1;
     }
+
+    std::string nameStr(name);
+    if (nameStr == "") {
+        std::cout << "Error: No name received" << std::endl;
+        return -2;
+    }
+
+    int choice = -1;
     ByteStream bs;
     Module module{data, size};
     auto funcs = module.getFunctions();
-    int choice = 0;
-
-    while (choice > -1 && choice < funcs.size()) {
-        std::string func = funcs[choice].getName();
-        Stack vars;
-        for (int i = 0; i < funcs[choice].getParams().size(); i++) {
-            vars.push(input[i]);
+    for (int i = 0; i < funcs.size(); i++) {
+        if (funcs[i].getName() == nameStr) {
+            choice = i;
+            break;
         }
-        module(func, vars);
-        auto result = std::get<int>(module.getResults(funcs[choice].getResults().size())[0]);
-        return result;
     }
-    return -1;
+    if (choice == -1) {
+        std::cout << "Error: No function with name " << nameStr << " found" << std::endl;
+        return -3;
+    }
+
+    Stack vars;
+    int i32Count, i64Count, f32Count, f64Count;
+    for (int i = 0; i < funcs[choice].getParams().size(); i++) {
+        switch (funcs[choice].getParams()[i]) {
+            case VariableType::is_int32:
+                vars.push(int32Input[i32Count]);
+                i32Count++;
+                break;
+            case VariableType::is_int64:
+                vars.push(int64Input[i64Count]);
+                i64Count++;
+                break;
+            case VariableType::isfloat32_t:
+                vars.push(float32Input[f32Count]);
+                f32Count++;
+                break;
+            case VariableType::isfloat64_t:
+                vars.push(float64Input[f64Count]);
+                f64Count++;
+                break;
+        }
+    }
+
+    module(name, vars);
+    auto results = module.getResults(funcs[choice].getResults().size());
+    for (int i = 0; i < results.size(); i++) {
+        switch (funcs[choice].getResults()[i]) {
+            case VariableType::is_int32:
+                int32Output[i] = std::get<int32_t>(results[i]);
+                break;
+            case VariableType::is_int64:
+                int64Output[i] = std::get<int64_t>(results[i]);
+                break;
+            case VariableType::isfloat32_t:
+                float32Output[i] = std::get<float32_t>(results[i]);
+                break;
+            case VariableType::isfloat64_t:
+                float64Output[i] = std::get<float64_t>(results[i]);
+                break;
+        }
+    }
+    return 0;
 }
