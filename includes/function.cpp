@@ -149,8 +149,9 @@ void Function::performOperation(uint8_t byte, std::vector<int> &jumpStack, std::
         case CALL:
             {
                 uint32_t funcIndex = bs.readUInt32();
-                Function f = Function(this->params, this->results, this->stack, this->functions);
-                f.setBody(this->body);
+                Function *func = &(*functions)[funcIndex];
+                Function f = Function(func->params, func->results, func->stack, func->functions);
+                f.setBody(func->body);
                 f(stack->size() - functions->at(funcIndex).getParams().size());
                 break;
             }
