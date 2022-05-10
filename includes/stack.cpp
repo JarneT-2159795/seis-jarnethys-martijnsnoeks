@@ -38,3 +38,7 @@ void Stack::printAll(){
     }
     std::cout << std::endl;
 }
+
+void Stack::removeRange(int start, int end) {
+    vector.erase(vector.begin() + start, vector.begin() + end);
+}
