@@ -25,4 +25,4 @@ add_executable(seis_jarnethys_martijnsnoeks
         includes/stack.h
         includes/token.h
         test-module/main.cpp
-        test-module/test.wasm)
+)
