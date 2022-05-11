@@ -64,5 +64,12 @@ const uint8_t F64ADD = 0xA0;
 const uint8_t F64SUB = 0xA1;
 const uint8_t F64MUL = 0xA2;
 
+// Numeric conversion instructions
+const uint8_t I32WRAP_I64 = 0xA7;
+const uint8_t I32TRUNC_F32_S = 0xA8;
+const uint8_t I32TRUNC_F32_U = 0xA9;
+const uint8_t I32TRUNC_F64_S = 0xAA;
+const uint8_t I32TRUNC_F64_U = 0xAB;
+
 // Expressions
 const uint8_t END = 0x0B;

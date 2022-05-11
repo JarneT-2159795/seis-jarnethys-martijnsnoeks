@@ -1,5 +1,6 @@
 #include "function.h"
 #include <iostream>
+#include <math.h>
 
 Function::Function(std::vector<VariableType> paramaterList, std::vector<VariableType> resultList,
                    Stack *globalStack, std::vector<Function> *moduleFunctions, std::vector<GlobalVariable> *moduleGlobals)
@@ -322,6 +323,24 @@ void Function::performOperation(uint8_t byte, std::vector<int> &jumpStack, std::
                 float64_t var1 = stack->pop<float64_t>();
                 stack->push(float64_t(var1 * var2));
                 break;
+            }
+        case I32WRAP_I64:
+            {
+                int64_t var = stack->pop<int64_t>();
+                stack->push(int32_t(var));
+                break;
+            }
+        case I32TRUNC_F32_S:
+        case I32TRUNC_F32_U:
+            {
+                float32_t var = stack->pop<float32_t>();
+                stack->push(int32_t(std::trunc(var)));
+            }
+        case I32TRUNC_F64_S:
+        case I32TRUNC_F64_U:
+            {
+                float64_t var = stack->pop<float64_t>();
+                stack->push(int32_t(std::trunc(var)));
             }
         case END:
             break;
