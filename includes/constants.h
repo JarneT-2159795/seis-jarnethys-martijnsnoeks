@@ -33,6 +33,8 @@ const uint8_t BR_IF = 0xD;
 const uint8_t LOCALGET = 0x20;
 const uint8_t LOCALSET = 0x21;
 const uint8_t LOCALTEE = 0x22;
+const uint8_t GLOBALGET = 0x23;
+const uint8_t GLOBALSET = 0x24;
 
 // Numeric instructions
 const uint8_t I32CONST = 0x41;

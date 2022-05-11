@@ -1,8 +1,9 @@
 #include "function.h"
 #include <iostream>
 
-Function::Function(std::vector<VariableType> paramaterList, std::vector<VariableType> resultList, Stack *globalStack, std::vector<Function> *moduleFunctions) 
-            : params{ paramaterList }, results{ resultList }, stack{ globalStack }, functions{ moduleFunctions } {
+Function::Function(std::vector<VariableType> paramaterList, std::vector<VariableType> resultList,
+                   Stack *globalStack, std::vector<Function> *moduleFunctions, std::vector<GlobalVariable> *moduleGlobals)
+            : params{ paramaterList }, results{ resultList }, stack{ globalStack }, functions{ moduleFunctions }, globals{ moduleGlobals } {
 };
 
 void Function::setName(std::string functionName) {
@@ -26,8 +27,11 @@ void Function::setBody(std::vector<uint8_t> functionBody) {
 void Function::findJumps() {
     enum class TYPE { IF, BLOCK };
     auto origStack = stack;
+    auto origGlobals = globals;
     Stack tempStack(*stack);
+    std::vector<GlobalVariable> tempGlobals(*globals);
     stack = &tempStack;
+    globals = &tempGlobals;
     bs.readVector(body);
     uint8_t byte;
 
@@ -86,6 +90,7 @@ void Function::findJumps() {
         }
     }
     stack = origStack;
+    globals = origGlobals;
     jumpsCalculated = true;
 }
 
@@ -150,7 +155,7 @@ void Function::performOperation(uint8_t byte, std::vector<int> &jumpStack, std::
             {
                 uint32_t funcIndex = bs.readUInt32();
                 Function *func = &(*functions)[funcIndex];
-                Function f = Function(func->params, func->results, func->stack, func->functions);
+                Function f = Function(func->params, func->results, func->stack, func->functions, func->globals);
                 f.setBody(func->body);
                 f(stack->size() - functions->at(funcIndex).getParams().size());
                 break;
@@ -189,6 +194,12 @@ void Function::performOperation(uint8_t byte, std::vector<int> &jumpStack, std::
                 stack->at(bs.readUInt32() + stackOffset) = var;
                 break;
             }
+        case GLOBALGET:
+            stack->push(globals->at(bs.readUInt32()).getVariable());
+            break;
+        case GLOBALSET:
+            globals->at(bs.readUInt32()).setVariable(stack->pop());
+            break;
         case I32CONST:
             stack->push(int32_t(bs.readInt32()));
             break;

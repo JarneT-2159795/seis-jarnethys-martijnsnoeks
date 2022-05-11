@@ -7,15 +7,32 @@
 #include "constants.h"
 #include "stack.h"
 
-#define float32_t float
-#define float64_t double
-
 enum class VariableType { is_int32, is_int64, isfloat32_t, isfloat64_t };
 typedef std::variant<int32_t, int64_t, float32_t, float64_t> Variable;
 
+struct FunctionException : public std::exception{
+    std::string s;
+    FunctionException(std::string ss, int byte) : s(ss + " Instruction: " + std::to_string((int)byte)) {};
+    FunctionException(std::string ss) : s(ss) {}
+    ~FunctionException() throw () {}
+    const char* what() const throw() { return s.c_str(); }
+};
+
+class GlobalVariable {
+public:
+    GlobalVariable(Variable var, bool isConstant) : value(var), is_constant(isConstant) {}
+    const bool is_constant;
+    Variable getVariable() { return value; }
+    void setVariable(Variable var) { if (is_constant) throw FunctionException("Cannot set constant variable"); value = var; }
+
+private:
+    Variable value;
+};
+
 class Function {
 public:
-    Function(std::vector<VariableType> paramaterList, std::vector<VariableType> resultList, Stack *moduleStack, std::vector<Function> *moduleFunctions);
+    Function(std::vector<VariableType> paramaterList, std::vector<VariableType> resultList,
+             Stack *moduleStack, std::vector<Function> *moduleFunctions, std::vector<GlobalVariable> *moduleGlobals);
     void setName(std::string functionName);
     std::string getName();
     std::vector<VariableType> getParams() { return params; };
@@ -35,17 +52,9 @@ private:
     int stackOffset = 0;
     Stack *stack;
     std::vector<Function> *functions;
+    std::vector<GlobalVariable> *globals;
     ByteStream bs;
     void performOperation(uint8_t byte, std::vector<int> &jumpStack, std::vector<int> &ifStack);
     bool jumpsCalculated = false;
     void findJumps();
-};
-
-struct FunctionException : public std::exception
-{
-   std::string s;
-   FunctionException(std::string ss, int byte) : s(ss + " Instruction: " + std::to_string((int)byte)) {};
-   FunctionException(std::string ss) : s(ss) {}
-   ~FunctionException() throw () {}
-   const char* what() const throw() { return s.c_str(); }
 };

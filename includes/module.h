@@ -14,6 +14,7 @@ private:
     Stack stack;
     std::vector<std::vector<VariableType>> functionTypes;
     std::vector<Function> functions;
+    std::vector<GlobalVariable> globals;
 
     VariableType getVarType(uint8_t type);
 

@@ -160,7 +160,7 @@ void Module::readFunctionSection(int length) {
     int numFunctions = bytestr.readByte();
     for (int i = 0; i < numFunctions; ++i) {
         int signature = 2 * bytestr.readByte();
-        functions.emplace_back(Function(functionTypes[signature], functionTypes[signature + 1], &stack, &functions));
+        functions.emplace_back(Function(functionTypes[signature], functionTypes[signature + 1], &stack, &functions, &globals));
     }
 }
 
@@ -168,7 +168,30 @@ void Module::readTableSection(int length) { std::cout << "table section" << std:
 
 void Module::readMemorySection(int length) { std::cout << "memory section" << std::endl; }
 
-void Module::readGlobalSection(int length) { std::cout << "global section" << std::endl; }
+void Module::readGlobalSection(int length) {
+    int numGlobals = bytestr.readByte();
+    for (int i = 0; i < numGlobals; ++i) {
+        bytestr.seek(1); // skip the type
+        bool isConst = bytestr.readByte() == 0;
+        switch (bytestr.readByte()) {
+            case I32CONST:
+                globals.emplace_back(GlobalVariable(Variable(bytestr.readInt32()), isConst));
+                break;
+            case I64CONST:
+                globals.emplace_back(GlobalVariable(Variable(bytestr.readInt64()), isConst));
+                break;
+            case F32CONST:
+                globals.emplace_back(GlobalVariable(Variable(bytestr.readFloat32()), isConst));
+                break;
+            case F64CONST:
+                globals.emplace_back(GlobalVariable(Variable(bytestr.readFloat64()), isConst));
+                break;
+            default:
+                throw ModuleException("Invalid file: not a valid global type", bytestr.getCurrentByteIndex());
+        }
+        bytestr.seek(1); // skip the end of the global
+    }
+}
 
 void Module::readExportSection(int length) {
     int exports = bytestr.readByte();
