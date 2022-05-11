@@ -287,6 +287,24 @@ void Function::performOperation(uint8_t byte, std::vector<int> &jumpStack, std::
                 stack->push(int32_t(var1 < var2));
                 break;
             }
+        case I32CLZ:
+            {
+                int32_t var = stack->pop<int32_t>();
+                stack->push(int32_t(__builtin_clz(var)));
+                break;
+            }
+        case I32CTZ:
+            {
+                int32_t var = stack->pop<int32_t>();
+                stack->push(int32_t(__builtin_ctz(var)));
+                break;
+            }
+        case I32POPCNT:
+            {
+                int32_t var = stack->pop<int32_t>();
+                stack->push(int32_t(__builtin_popcount(var)));
+                break;
+            }
         case I32ADD:
             {
                 int32_t var2 = stack->pop<int32_t>();

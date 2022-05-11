@@ -61,6 +61,9 @@ const uint8_t I32GE_U = 0x4F;
 
 const uint8_t F64LT = 0x63;
 
+const uint8_t I32CLZ = 0x67;
+const uint8_t I32CTZ = 0x68;
+const uint8_t I32POPCNT = 0x69;
 const uint8_t I32ADD = 0x6A;
 const uint8_t I32SUB = 0x6B;
 const uint8_t I32MUL = 0x6C;
