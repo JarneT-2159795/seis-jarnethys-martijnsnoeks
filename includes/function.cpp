@@ -2,9 +2,9 @@
 #include <iostream>
 #include <math.h>
 
-Function::Function(std::vector<VariableType> paramaterList, std::vector<VariableType> resultList,
+Function::Function(std::vector<VariableType> parameterList, std::vector<VariableType> resultList,
                    Stack *globalStack, std::vector<Function> *moduleFunctions, std::vector<GlobalVariable> *moduleGlobals)
-            : params{ paramaterList }, results{ resultList }, stack{ globalStack }, functions{ moduleFunctions }, globals{ moduleGlobals } {
+            : params{ parameterList }, results{ resultList }, stack{ globalStack }, functions{ moduleFunctions }, globals{ moduleGlobals } {
 };
 
 void Function::setName(std::string functionName) {
@@ -183,6 +183,21 @@ void Function::performOperation(uint8_t byte, std::vector<int> &jumpStack, std::
                 }
                 break;
             }
+        case DROP:
+            stack->pop();
+            break;
+        case SELECT:
+            {
+                int32_t value = stack->pop<int32_t>();
+                Variable var2 = stack->pop();
+                Variable var1 = stack->pop();
+                if (value) {
+                    stack->push(var1);
+                } else {
+                    stack->push(var2);
+                }
+                break;
+            }
         case LOCALGET:
             stack->push(stack->at(bs.readUInt32() + stackOffset));
             break;
@@ -226,11 +241,43 @@ void Function::performOperation(uint8_t byte, std::vector<int> &jumpStack, std::
                 stack->push(int32_t(var1 == var2));
                 break;
             }
+        case I32NE:
+            {
+                int32_t var2 = stack->pop<int32_t>();
+                int32_t var1 = stack->pop<int32_t>();
+                stack->push(int32_t(var1 != var2));
+                break;
+            }
         case I32LT_S:
+        case I32LT_U:
             {
                 int32_t var2 = stack->pop<int32_t>();
                 int32_t var1 = stack->pop<int32_t>();
                 stack->push(int32_t(var1 < var2));
+                break;
+            }
+        case I32GT_S:
+        case I32GT_U:
+            {
+                int32_t var2 = stack->pop<int32_t>();
+                int32_t var1 = stack->pop<int32_t>();
+                stack->push(int32_t(var1 > var2));
+                break;
+            }
+        case I32LE_S:
+        case I32LE_U:
+            {
+                int32_t var2 = stack->pop<int32_t>();
+                int32_t var1 = stack->pop<int32_t>();
+                stack->push(int32_t(var1 <= var2));
+                break;
+            }
+        case I32GE_S:
+        case I32GE_U:
+            {
+                int32_t var2 = stack->pop<int32_t>();
+                int32_t var1 = stack->pop<int32_t>();
+                stack->push(int32_t(var1 >= var2));
                 break;
             }
         case F64LT:
@@ -259,6 +306,74 @@ void Function::performOperation(uint8_t byte, std::vector<int> &jumpStack, std::
                 int32_t var2 = stack->pop<int32_t>();
                 int32_t var1 = stack->pop<int32_t>();
                 stack->push(int32_t(var1 * var2));
+                break;
+            }
+        case I32DIV_S:
+        case I32DIV_U:
+            {
+                int32_t var2 = stack->pop<int32_t>();
+                int32_t var1 = stack->pop<int32_t>();
+                stack->push(int32_t(var1 / var2));
+                break;
+            }
+        case I32REM_S:
+        case I32REM_U:
+            {
+                int32_t var2 = stack->pop<int32_t>();
+                int32_t var1 = stack->pop<int32_t>();
+                stack->push(int32_t(var1 % var2));
+                break;
+            }
+        case I32AND:
+            {
+                int32_t var2 = stack->pop<int32_t>();
+                int32_t var1 = stack->pop<int32_t>();
+                stack->push(int32_t(var1 & var2));
+                break;
+            }
+        case I32OR:
+            {
+                int32_t var2 = stack->pop<int32_t>();
+                int32_t var1 = stack->pop<int32_t>();
+                stack->push(int32_t(var1 | var2));
+                break;
+            }
+        case I32XOR:
+            {
+                int32_t var2 = stack->pop<int32_t>();
+                int32_t var1 = stack->pop<int32_t>();
+                stack->push(int32_t(var1 ^ var2));
+                break;
+            }
+        case I32SHL:
+            {
+                int32_t var2 = stack->pop<int32_t>();
+                int32_t var1 = stack->pop<int32_t>();
+                stack->push(int32_t(var1 << var2));
+                break;
+            }
+        case I32SHR_S:
+        case I32SHR_U:
+            {
+                int32_t var2 = stack->pop<int32_t>();
+                int32_t var1 = stack->pop<int32_t>();
+                stack->push(int32_t(var1 >> var2));
+                break;
+            }
+        case I32ROTL:
+            {
+                // from https://www.geeksforgeeks.org/rotate-bits-of-an-integer/
+                int32_t var2 = stack->pop<int32_t>();
+                int32_t var1 = stack->pop<int32_t>();
+                stack->push(int32_t((var1 << var2) | (var1 >> (32 - var2))));
+                break;
+            }
+        case I32ROTR:
+            {
+                // from https://www.geeksforgeeks.org/rotate-bits-of-an-integer/
+                int32_t var2 = stack->pop<int32_t>();
+                int32_t var1 = stack->pop<int32_t>();
+                stack->push(int32_t((var1 >> var2) | (var1 << (32 - var2))));
                 break;
             }
         case I64ADD:
@@ -332,20 +447,45 @@ void Function::performOperation(uint8_t byte, std::vector<int> &jumpStack, std::
             }
         case I32TRUNC_F32_S:
         case I32TRUNC_F32_U:
+        case I32REINTERPRET_F32:
             {
                 float32_t var = stack->pop<float32_t>();
                 stack->push(int32_t(std::trunc(var)));
+                break;
             }
         case I32TRUNC_F64_S:
         case I32TRUNC_F64_U:
             {
                 float64_t var = stack->pop<float64_t>();
                 stack->push(int32_t(std::trunc(var)));
+                break;
+            }
+        case I64EXTENDI32_S:
+        case I64EXTENDI32_U:
+            {
+                int32_t var = stack->pop<int32_t>();
+                stack->push(int64_t(var));
+                break;
+            }
+        case I64TRUNC_F32_S:
+        case I64TRUNC_F32_U:
+            {
+                float32_t var = stack->pop<float32_t>();
+                stack->push(int64_t(std::trunc(var)));
+                break;
+            }
+        case I64TRUNC_F64_S:
+        case I64TRUNC_F64_U:
+        case I64REINTERPRET_F64:
+            {
+                float64_t var = stack->pop<float64_t>();
+                stack->push(int64_t(std::trunc(var)));
+                break;
             }
         case END:
             break;
         
         default:
-            throw FunctionException("Invalid or unsupported instuction", byte);
+            throw FunctionException("Invalid or unsupported instruction", byte);
         }
 }

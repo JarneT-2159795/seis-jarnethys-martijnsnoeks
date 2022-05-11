@@ -4,10 +4,12 @@
 
 Module::Module(std::string filepath) : bytestr{filepath} {
     parse();
+    functions[startFunction](0);
 }
 
 Module::Module(uint8_t *data, int size) : bytestr{data, size} {
     parse();
+    functions[startFunction](0);
 }
 
 void Module::parse() {
@@ -58,7 +60,6 @@ void Module::parse() {
             break;
         default:
             throw ModuleException("Invalid file: not a valid section code", bytestr.getCurrentByteIndex());
-            break;
         }
     }
 }
@@ -202,7 +203,9 @@ void Module::readExportSection(int length) {
     }
 }
 
-void Module::readStartSection(int length) { std::cout << "start section" << std::endl; }
+void Module::readStartSection(int length) {
+    startFunction = bytestr.readUInt32();
+}
 
 void Module::readElementSection(int length) { std::cout << "element section" << std::endl; }
 
