@@ -32,6 +32,7 @@ const uint8_t BR_IF = 0xD;
 // Variable instructions
 const uint8_t LOCALGET = 0x20;
 const uint8_t LOCALSET = 0x21;
+const uint8_t LOCALTEE = 0x22;
 
 // Numeric instructions
 const uint8_t I32CONST = 0x41;

@@ -183,6 +183,12 @@ void Function::performOperation(uint8_t byte, std::vector<int> &jumpStack, std::
         case LOCALSET:
             stack->at(bs.readUInt32() + stackOffset) = stack->pop();
             break;
+        case LOCALTEE:
+            {
+                Variable var = stack->back();
+                stack->at(bs.readUInt32() + stackOffset) = var;
+                break;
+            }
         case I32CONST:
             stack->push(int32_t(bs.readInt32()));
             break;
