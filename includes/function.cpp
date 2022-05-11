@@ -2,10 +2,10 @@
 #include <iostream>
 #include <math.h>
 
-Function::Function(std::vector<VariableType> parameterList, std::vector<VariableType> resultList,
-                   Stack *globalStack, std::vector<Function> *moduleFunctions, std::vector<GlobalVariable> *moduleGlobals)
-            : params{ parameterList }, results{ resultList }, stack{ globalStack }, functions{ moduleFunctions }, globals{ moduleGlobals } {
-};
+Function::Function(std::vector<VariableType> parameterList, std::vector<VariableType> resultList, Stack *globalStack,
+                   std::vector<Function> *moduleFunctions, std::vector<GlobalVariable> *moduleGlobals, std::vector<Memory> *moduleMemory)
+            : params{ parameterList }, results{ resultList }, stack{ globalStack },
+              functions{ moduleFunctions }, globals{ moduleGlobals }, memories{ moduleMemory } {}
 
 void Function::setName(std::string functionName) {
     name = functionName;
@@ -29,10 +29,13 @@ void Function::findJumps() {
     enum class TYPE { IF, BLOCK };
     auto origStack = stack;
     auto origGlobals = globals;
+    auto origMemories = memories;
     Stack tempStack(*stack);
     std::vector<GlobalVariable> tempGlobals(*globals);
+    std::vector<Memory> tempMemories(*memories);
     stack = &tempStack;
     globals = &tempGlobals;
+    memories = &tempMemories;
     bs.readVector(body);
     uint8_t byte;
 
@@ -65,7 +68,7 @@ void Function::findJumps() {
                     bs.seek(-1);
                     break;
                 }
-            case END:
+            case BLOCK_END:
                 {
                     if (last.back() == TYPE::IF) {
                         std::array<int, 2> a;
@@ -92,6 +95,7 @@ void Function::findJumps() {
     }
     stack = origStack;
     globals = origGlobals;
+    memories = origMemories;
     jumpsCalculated = true;
 }
 
@@ -156,7 +160,7 @@ void Function::performOperation(uint8_t byte, std::vector<int> &jumpStack, std::
             {
                 uint32_t funcIndex = bs.readUInt32();
                 Function *func = &(*functions)[funcIndex];
-                Function f = Function(func->params, func->results, func->stack, func->functions, func->globals);
+                Function f = Function(func->params, func->results, func->stack, func->functions, func->globals, func->memories);
                 f.setBody(func->body);
                 f(stack->size() - functions->at(funcIndex).getParams().size());
                 break;
@@ -500,7 +504,35 @@ void Function::performOperation(uint8_t byte, std::vector<int> &jumpStack, std::
                 stack->push(int64_t(std::trunc(var)));
                 break;
             }
-        case END:
+        case MEMORY_BULK_OP:
+            {
+                // opcodes from https://github.com/WebAssembly/bulk-memory-operations/blob/master/proposals/bulk-memory-operations/Overview.md
+                uint32_t operation = bs.readUInt32();
+                switch (operation)
+                {
+                    case 0x0A: // mem.copy
+                        {
+                            int32_t len = stack->pop<int32_t>();
+                            int32_t src = stack->pop<int32_t>();
+                            int32_t dst = stack->pop<int32_t>();
+                            if ((*memories)[dst].data()->size() < len) {
+                                (*memories)[dst].data()->resize(len);
+                            }
+                            std::copy((*memories)[src].data()->begin(), (*memories)[src].data()->begin() + len, (*memories)[dst].data()->begin());
+                            break;
+                        }
+                    case 0x0B: // mem.fill
+                        {
+                            uint32_t index = bs.readUInt32();
+                            int32_t length = stack->pop<int32_t>();
+                            int32_t value = stack->pop<int32_t>();
+                            int32_t offset = stack->pop<int32_t>();
+                            (*memories)[index].fill(offset, value, length);
+                            break;
+                        }
+                }
+            }
+        case BLOCK_END:
             break;
         
         default:

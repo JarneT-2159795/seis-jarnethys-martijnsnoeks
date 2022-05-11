@@ -15,6 +15,7 @@ private:
     std::vector<std::vector<VariableType>> functionTypes;
     std::vector<Function> functions;
     std::vector<GlobalVariable> globals;
+    std::vector<Memory> memories;
 
     VariableType getVarType(uint8_t type);
     int32_t startFunction = -1;

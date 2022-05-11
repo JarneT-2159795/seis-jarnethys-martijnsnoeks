@@ -165,13 +165,25 @@ void Module::readFunctionSection(int length) {
     int numFunctions = bytestr.readByte();
     for (int i = 0; i < numFunctions; ++i) {
         int signature = 2 * bytestr.readByte();
-        functions.emplace_back(Function(functionTypes[signature], functionTypes[signature + 1], &stack, &functions, &globals));
+        functions.emplace_back(Function(functionTypes[signature], functionTypes[signature + 1], &stack, &functions, &globals, &memories));
     }
 }
 
 void Module::readTableSection(int length) { std::cout << "table section" << std::endl; }
 
-void Module::readMemorySection(int length) { std::cout << "memory section" << std::endl; }
+void Module::readMemorySection(int length) {
+    int numMemories = bytestr.readByte();
+    for (int i = 0; i < numMemories; ++i) {
+        if (bytestr.readByte()) {
+            uint32_t initial = bytestr.readUInt32();
+            uint32_t maximum = bytestr.readUInt32();
+            memories.emplace_back(Memory(initial, maximum));
+        } else {
+            uint32_t initial = bytestr.readUInt32();
+            memories.emplace_back(Memory(initial));
+        }
+    }
+}
 
 void Module::readGlobalSection(int length) {
     int numGlobals = bytestr.readByte();
@@ -202,8 +214,17 @@ void Module::readExportSection(int length) {
     int exports = bytestr.readByte();
     for (int i = 0; i < exports; ++i) {
         auto name = bytestr.readASCIIString(bytestr.readByte());
-        bytestr.seek(1); // TODO fix export kind
-        functions[bytestr.readUInt32()].setName(name);
+        uint8_t kind = bytestr.readByte();
+        switch (kind) {
+            case 0x00: // function
+                functions[bytestr.readUInt32()].setName(name);
+                break;
+            case 0x02: // memory
+                memories[bytestr.readUInt32()].setName(name);
+                break;
+            default:
+                throw ModuleException("Invalid file: not a valid export kind", bytestr.getCurrentByteIndex());
+        }
     }
 }
 

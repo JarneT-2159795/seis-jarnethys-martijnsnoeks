@@ -109,5 +109,6 @@ const uint8_t I64TRUNC_F64_S = 0xB0;
 const uint8_t I64TRUNC_F64_U = 0xB1;
 const uint8_t I64REINTERPRET_F64 = 0xBD;
 
-// Expressions
-const uint8_t END = 0x0B;
+// Other instructions
+const uint8_t BLOCK_END = 0x0B;
+const uint8_t MEMORY_BULK_OP = 0xFC;
