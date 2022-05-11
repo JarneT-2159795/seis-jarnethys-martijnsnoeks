@@ -17,7 +17,7 @@ private:
     std::vector<GlobalVariable> globals;
 
     VariableType getVarType(uint8_t type);
-    uint32_t startFunction;
+    int32_t startFunction = -1;
 
     void parse();
     void readTypeSection(int length);

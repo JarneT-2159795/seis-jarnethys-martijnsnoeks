@@ -4,12 +4,16 @@
 
 Module::Module(std::string filepath) : bytestr{filepath} {
     parse();
-    functions[startFunction](0);
+    if (startFunction > 0) {
+        functions[startFunction](0);
+    }
 }
 
 Module::Module(uint8_t *data, int size) : bytestr{data, size} {
     parse();
-    functions[startFunction](0);
+    if (startFunction > 0) {
+        functions[startFunction](0);
+    }
 }
 
 void Module::parse() {
