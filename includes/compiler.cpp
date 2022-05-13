@@ -11,7 +11,7 @@ Compiler::Compiler(std::vector<Instruction*> input)
 {
 	// TODO: now we just make a big bytestream of size 2000 bytes filled with \0
 	// this should be better (e.g., grow dynamically as we compile more in increments!)
-    this->output = new ByteStream( std::vector<unsigned char>(2000, '\0') );
+    this->output = new ByteStream();
     
     this->instructions = input;
 }
@@ -21,6 +21,9 @@ ByteStream* Compiler::compile()
     // NOTE: comment this out to see "original" compiler output
     this->instructions = this->foldConstants( this->instructions );
 
+    for (uint8_t byte : {0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00}) { // magic number and version
+        this->output->writeByte(byte);
+    }
     for ( auto instruction : this->instructions ) {
         this->output->writeUInt32( instruction->instruction_code );
 
@@ -45,6 +48,7 @@ ByteStream* Compiler::compile()
 		++c;
 	}
 
+    output->writeFile("output.wasm");
     return this->output;
 }
 
