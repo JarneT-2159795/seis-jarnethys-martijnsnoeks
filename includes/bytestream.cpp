@@ -13,6 +13,9 @@ ByteStream::ByteStream(std::string filepath) : currentByteIndex{ 0 } {
         f.seekg (0, f.end);
         size = f.tellg();
         f.seekg (0, f.beg);
+        if (filepath.find(".wat") != std::string::npos) {
+            size--;
+        }
 
         buffer.reserve(size);
         f.read((char*)buffer.data(), size);
@@ -31,10 +34,6 @@ ByteStream::ByteStream(uint8_t *data, int size) : currentByteIndex{ 0 } {
     for (int i = 0; i < size; i++) {
         buffer.push_back(data[i]);
     }
-}
-
-bool ByteStream::end() {
-    return atEnd();
 }
 
 ByteStream::~ByteStream() {
@@ -63,6 +62,13 @@ void ByteStream::readVector(std::vector<uint8_t> vector) {
     buffer = vector;
 }
 
+void ByteStream::writeFile(std::string filepath) {
+    std::ofstream f(filepath, std::ios::binary | std::ios::out);
+    if (f.is_open()) {
+        f.write((char*)buffer.data(), sizeof(uint8_t) * buffer.size());
+    }
+}
+
 uint8_t ByteStream::readByte() {
     if (atEnd()) {
         throw std::out_of_range("ByteStream at end of stream");
@@ -81,9 +87,6 @@ std::vector<uint8_t> ByteStream::readBytes(int amount) {
 }
 
 uint8_t ByteStream::peekByte() {
-    if (atEnd()) {
-        throw std::out_of_range("ByteStream at end of stream");
-    }
     return buffer[currentByteIndex];
 }
 
@@ -93,8 +96,9 @@ void ByteStream::setByteIndex(int index) {
 
 void ByteStream::writeByte(uint8_t byte){
     // TODO: error handling!
-    buffer[ currentByteIndex ] = byte;
+    buffer.push_back(byte);
     currentByteIndex++;
+    size++;
 }
 
 void ByteStream::writeUInt32(uint32_t val) {

@@ -19,12 +19,13 @@ public:
     ByteStream(std::string filepath);
     ByteStream(std::vector<uint8_t> stream);
     ByteStream(uint8_t *data, int size);
-    ByteStream() : currentByteIndex{0} {};
-    bool end();
+    ByteStream() : currentByteIndex(0), buffer(), size(0) {};
     ~ByteStream();
 
     void readFile(std::string filepath);
     void readVector(std::vector<uint8_t> vector);
+
+    void writeFile(std::string filepath);
     
     uint8_t readByte();
     std::vector<uint8_t> readBytes(int amount);
