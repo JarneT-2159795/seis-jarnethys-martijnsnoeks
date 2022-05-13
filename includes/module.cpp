@@ -1,6 +1,7 @@
 #include "module.h"
 #include <iostream>
 #include <cstdarg>
+using namespace constants;
 
 Module::Module(std::string filepath) : bytestr{filepath} {
     parse();

@@ -1,6 +1,7 @@
 #include "function.h"
 #include <iostream>
 #include <math.h>
+using namespace constants;
 
 Function::Function(std::vector<VariableType> parameterList, std::vector<VariableType> resultList, Stack *globalStack,
                    std::vector<Function> *moduleFunctions, std::vector<GlobalVariable> *moduleGlobals, std::vector<Memory> *moduleMemory)
