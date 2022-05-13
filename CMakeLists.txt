@@ -24,5 +24,5 @@ add_executable(seis_jarnethys_martijnsnoeks
         includes/stack.cpp
         includes/stack.h
         includes/token.h
-        test-module/main.cpp
+        test-compiler/main.cpp
 )
