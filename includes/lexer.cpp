@@ -23,10 +23,15 @@ int Lexer::lex()
 {
     this->tokens = std::vector<Token>();
 
-	while( !this->byteStream->end() ) {
+	while( !this->byteStream->atEnd() ) {
 
         while( Character::isWhitespace( this->byteStream->peekByte() ) ) {
             this->byteStream->seek(1);
+        }
+
+        // if the file ends with a whitespace
+        if( this->byteStream->atEnd() ) {
+            break;
         }
 
         unsigned char nextChar = this->byteStream->peekByte();
@@ -53,7 +58,7 @@ int Lexer::lex()
             this->parseComment();
         }
         else {
-            std::cout << "Unknown character " << this->byteStream->peekByte() << std::endl;
+            std::cout << "Unknown character " << this->byteStream->peekByte() << " at byte " << this->byteStream->getCurrentByteIndex() << std::endl;
             this->tokens.push_back( Token(TokenType::STRING, std::string(1, this->byteStream->readByte())) ) ;
         }
 
