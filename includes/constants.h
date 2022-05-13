@@ -96,17 +96,11 @@ const uint8_t F64MUL = 0xA2;
 // to i32
 const uint8_t I32WRAP_I64 = 0xA7;
 const uint8_t I32TRUNC_F32_S = 0xA8;
-const uint8_t I32TRUNC_F32_U = 0xA9;
 const uint8_t I32TRUNC_F64_S = 0xAA;
-const uint8_t I32TRUNC_F64_U = 0xAB;
 const uint8_t I32REINTERPRET_F32 = 0xBC;
 // to i64
-const uint8_t I64EXTENDI32_S = 0xAC;
-const uint8_t I64EXTENDI32_U = 0xAD;
 const uint8_t I64TRUNC_F32_S = 0xAE;
-const uint8_t I64TRUNC_F32_U = 0xAF;
 const uint8_t I64TRUNC_F64_S = 0xB0;
-const uint8_t I64TRUNC_F64_U = 0xB1;
 const uint8_t I64REINTERPRET_F64 = 0xBD;
 
 // Other instructions

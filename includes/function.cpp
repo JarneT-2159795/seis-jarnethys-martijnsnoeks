@@ -468,40 +468,39 @@ void Function::performOperation(uint8_t byte, std::vector<int> &jumpStack, std::
                 break;
             }
         case I32TRUNC_F32_S:
-        case I32TRUNC_F32_U:
-        case I32REINTERPRET_F32:
             {
                 float32_t var = stack->pop<float32_t>();
                 stack->push(int32_t(std::trunc(var)));
                 break;
             }
         case I32TRUNC_F64_S:
-        case I32TRUNC_F64_U:
             {
                 float64_t var = stack->pop<float64_t>();
                 stack->push(int32_t(std::trunc(var)));
                 break;
             }
-        case I64EXTENDI32_S:
-        case I64EXTENDI32_U:
+        case I32REINTERPRET_F32:
             {
-                int32_t var = stack->pop<int32_t>();
-                stack->push(int64_t(var));
+                float32_t var = stack->pop<float32_t>();
+                stack->push(int32_t(reinterpret_cast<int32_t&>(var)));
                 break;
             }
         case I64TRUNC_F32_S:
-        case I64TRUNC_F32_U:
             {
                 float32_t var = stack->pop<float32_t>();
                 stack->push(int64_t(std::trunc(var)));
                 break;
             }
         case I64TRUNC_F64_S:
-        case I64TRUNC_F64_U:
-        case I64REINTERPRET_F64:
             {
                 float64_t var = stack->pop<float64_t>();
                 stack->push(int64_t(std::trunc(var)));
+                break;
+            }
+        case I64REINTERPRET_F64:
+            {
+                float64_t var = stack->pop<float64_t>();
+                stack->push(int64_t(reinterpret_cast<int32_t&>(var)));
                 break;
             }
         case MEMORY_BULK_OP:
