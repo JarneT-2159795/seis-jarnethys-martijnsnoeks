@@ -68,6 +68,13 @@ void ByteStream::readFile(std::string filepath) {
     f.close();
 }
 
+void ByteStream::readCharVector(std::vector<uint8_t> vector) {
+    buffer.clear();
+    currentByteIndex = 0;
+    size = vector.size();
+    buffer = vector;
+}
+
 void ByteStream::readVector(std::vector<uint8_t> vector) {
     buffer.clear();
     currentByteIndex = 0;
