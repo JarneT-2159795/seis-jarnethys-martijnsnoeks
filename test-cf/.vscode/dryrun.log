@@ -1,4 +1,4 @@
-make --dry-run --always-make --keep-going --print-directory
+make --dry-run --keep-going --print-directory
 make: Entering directory '/home/jarne/seis/seis-jarnethys-martijnsnoeks/test-cf'
 wat2wasm --enable-multi-value code.wat
 rm build_test/ -rf

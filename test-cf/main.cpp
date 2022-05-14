@@ -1,14 +1,46 @@
 #include "../includes/module.h"
 #include <iostream>
 #include <time.h>
+#include "../includes/lexer.h"
+#include "../includes/parser.h"
+#include "../includes/compiler.h"
 
 extern "C" {
     int useModule(uint8_t *data, int size, char* name, int32_t *int32Input, int64_t *int64Input, float32_t *float32Input, float64_t *float64Input,
+                    int32_t *int32Output, int64_t *int64Output, float32_t *float32Output, float64_t *float64Output);
+    int compile(uint8_t *data, int size, char *name, int32_t *int32Input, int64_t *int64Input, float32_t *float32Input, float64_t *float64Input,
                     int32_t *int32Output, int64_t *int64Output, float32_t *float32Output, float64_t *float64Output);
     int randomInt() {
         srand(time(0));
         return rand();
     }
+}
+
+int compile(uint8_t *data, int size, char *name, int32_t *int32Input, int64_t *int64Input, float32_t *float32Input, float64_t *float64Input,
+                int32_t *int32Output, int64_t *int64Output, float32_t *float32Output, float64_t *float64Output) {
+    std::vector<uint8_t> chars;
+    for (int i = 0; i < size; i++) {
+        chars.push_back(data[i]);
+    }
+	Lexer lexer = Lexer{chars};
+
+    int err = lexer.lex();
+
+    Parser parser = Parser(&lexer);
+
+    //ByteStream* compiledOutput = parser.parseSimple();
+    std::vector<Instruction*> AST = parser.parseProper();
+    auto functions = parser.getFunctions();
+    
+
+    //Compiler compiler = Compiler(AST);
+    Compiler compiler = Compiler(functions);
+    auto compiledOutput = compiler.compile();
+
+    useModule(compiledOutput->getBuffer(), compiledOutput->getTotalByteCount(), name, int32Input, int64Input, float32Input, float64Input,
+                int32Output, int64Output, float32Output, float64Output);
+
+    return 0;
 }
 
 int useModule(uint8_t *data, int size, char *name, int32_t *int32Input, int64_t *int64Input, float32_t *float32Input, float64_t *float64Input,
@@ -68,6 +100,7 @@ int useModule(uint8_t *data, int size, char *name, int32_t *int32Input, int64_t 
         switch (funcs[choice].getResults()[i]) {
             case VariableType::is_int32:
                 int32Output[i] = std::get<int32_t>(results[i]);
+                std::cout << "int32Output[" << i << "] = " << int32Output[i] << std::endl;
                 break;
             case VariableType::is_int64:
                 int64Output[i] = std::get<int64_t>(results[i]);

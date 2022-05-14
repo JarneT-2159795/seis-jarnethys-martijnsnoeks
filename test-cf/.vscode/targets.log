@@ -1,6 +1,4 @@
 make all --print-data-base --no-builtin-variables --no-builtin-rules --question
-make: *** No rule to make target 'all'.  Stop.
-
 # GNU Make 4.2.1
 # Built for x86_64-pc-linux-gnu
 # Copyright (C) 1988-2016 Free Software Foundation, Inc.
@@ -8,7 +6,7 @@ make: *** No rule to make target 'all'.  Stop.
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Sat May 14 15:59:30 2022
+# Make data base, printed on Sat May 14 17:10:57 2022
 
 # Variables
 
@@ -129,6 +127,9 @@ MFLAGS = -pqrR
 # automatic
 +D = $(patsubst %/,%,$(dir $+))
 # automatic
+ 
+make: *** No rule to make target 'all'.  Stop.
+
 +F = $(notdir $+)
 # environment
 QUEX_PATH = /opt/quex/quex-0.71.2
@@ -205,7 +206,7 @@ local:
 # Not a target:
 Makefile:
 #  Implicit rule search has been done.
-#  Last modified 2022-04-30 19:17:07.7576625
+#  Last modified 2022-05-14 17:08:12.2051494
 #  File has been updated.
 #  Successfully updated.
 
@@ -217,7 +218,7 @@ edge-local:
 	wat2wasm --enable-multi-value code.wat
 	rm build_edge/ -rf
 	mkdir build_edge
-	cd build_edge && em++ ../main.cpp ../../includes/*.cpp -std=c++2a --no-entry -O2 -s WASM=1 -s EXPORTED_FUNCTIONS="[_useModule, _randomInt]" -s ALLOW_MEMORY_GROWTH=1 -s DYNAMIC_EXECUTION=0 -s TEXTDECODER=0 -s MODULARIZE=1 -s ENVIRONMENT='web' -s EXPORT_NAME="WASMModule" --pre-js '../pre.js' -o test.js || exit 1
+	cd build_edge && em++ ../main.cpp ../../includes/*.cpp -std=c++2a --no-entry -O2 -s WASM=1 -s EXPORTED_FUNCTIONS="[_useModule, _randomInt, _compile]" -s ALLOW_MEMORY_GROWTH=1 -s DYNAMIC_EXECUTION=0 -s TEXTDECODER=0 -s MODULARIZE=1 -s ENVIRONMENT='web' -s EXPORT_NAME="WASMModule" --pre-js '../pre.js' -o test.js
 	cp build_edge/test.js vm-worker/build/test.js
 	cp build_edge/test.wasm vm-worker/build/test.wasm
 	cd vm-worker && wrangler dev
@@ -236,7 +237,7 @@ edge-publish:
 	wat2wasm --enable-multi-value code.wat
 	rm build_edge/ -rf
 	mkdir build_edge
-	cd build_edge && em++ ../main.cpp ../../includes/*.cpp -std=c++2a --no-entry -O2 -s WASM=1 -s EXPORTED_FUNCTIONS="[_useModule, _randomInt]" -s ALLOW_MEMORY_GROWTH=1 -s DYNAMIC_EXECUTION=0 -s TEXTDECODER=0 -s MODULARIZE=1 -s ENVIRONMENT='web' -s EXPORT_NAME="WASMModule" --pre-js '../pre.js' -o test.js || exit 1
+	cd build_edge && em++ ../main.cpp ../../includes/*.cpp -std=c++2a --no-entry -O2 -s WASM=1 -s EXPORTED_FUNCTIONS="[_useModule, _randomInt, _compile]" -s ALLOW_MEMORY_GROWTH=1 -s DYNAMIC_EXECUTION=0 -s TEXTDECODER=0 -s MODULARIZE=1 -s ENVIRONMENT='web' -s EXPORT_NAME="WASMModule" --pre-js '../pre.js' -o test.js
 	cp build_edge/test.js vm-worker/build/test.js
 	cp build_edge/test.wasm vm-worker/build/test.wasm
 	cd vm-worker && wrangler publish
@@ -255,6 +256,6 @@ edge-publish:
 # strcache performance: lookups = 28 / hit rate = 25%
 # hash-table stats:
 # Load=21/8192=0%, Rehash=0, Collisions=1/28=4%
-# Finished Make data base on Sat May 14 15:59:30 2022
+# Finished Make data base on Sat May 14 17:10:57 2022
 
  
