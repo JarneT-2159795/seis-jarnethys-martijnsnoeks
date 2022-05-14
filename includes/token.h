@@ -35,8 +35,7 @@ class Character {
 // TODO: support more number types than just uint32_t
 enum class TokenType { BRACKETS_OPEN, BRACKETS_CLOSED, KEYWORD, STRING, NUMBER };
 
-class Token
-{
+class Token {
 public:
     Token(TokenType type, std::string string_value) : type( type ), string_value( string_value ) {}
     Token(TokenType type, uint32_t uint32_value) : type( type ), uint32_value( uint32_value ) {}

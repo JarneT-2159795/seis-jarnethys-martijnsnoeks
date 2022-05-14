@@ -8,7 +8,6 @@
 #include "stack.h"
 
 enum class VariableType { is_int32, is_int64, isfloat32_t, isfloat64_t };
-typedef std::variant<int32_t, int64_t, float32_t, float64_t> Variable;
 
 struct FunctionException : public std::exception{
     std::string s;

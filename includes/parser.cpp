@@ -10,9 +10,8 @@
 #include "instruction.h"
 
 using namespace std;
-
-ByteStream* Parser::parseSimple()
-{
+/*
+ByteStream* Parser::parseSimple() {
 	std::vector<Token> tokens = this->lexer->getTokens();
 
 	// Simple parser will just go through the tokens and output them as they appear!
@@ -80,15 +79,14 @@ ByteStream* Parser::parseSimple()
 }
 
 
+*/
 
-
-std::vector<Instruction*> Parser::parseProper() 
-{
+std::vector<Instruction*> Parser::parseProper() {
 	std::vector<Token> tokens = this->lexer->getTokens();
 
 	// Proper parser will map instructions to the main calculations and their operands, if applicable
 
-	std::vector<Instruction*> output = std::vector<Instruction*>();
+	std::vector<Instruction*> *output = nullptr;
 
 	int totalLenght = 0;
 
@@ -98,21 +96,84 @@ std::vector<Instruction*> Parser::parseProper()
 	bool HACK_inCodeBlock = false;
 
 	for ( int i = 0; i < tokens.size(); ++i ) {
+        std::cout << "Token " << i << ": " << tokens[i].string_value << std::endl;
 		
 		Token token = tokens[i];
+        if (token.string_value == "func") {
+            if (currentFunction != nullptr) {
+                output->push_back(new Instruction(InstructionType::INSTRUCTION_WITHOUT_PARAMETER, constants::BLOCK_END));
+                currentFunction->body = output;
+                functions.push_back(currentFunction);
+                output = new std::vector<Instruction*>();
+                currentFunction = new AST_Function;
+            } else {
+                currentFunction = new AST_Function;
+                output = new std::vector<Instruction*>;
+            }
+            continue;
+        }
+        if (token.string_value == "export") {
+            i++;
+            if (currentFunction != nullptr) {
+                currentFunction->name = tokens[i].string_value;
+            }
+            continue;
+        }
+        if (token.string_value == "param") {
+            i++;
+            while (tokens[i].string_value != ")") {
+                switch(InstructionNumber::getType(tokens[i].string_value)) {
+                    case InstructionNumber::Type::I32:
+                        currentFunction->parameters.push_back(VariableType::is_int32);
+                        break;
+                    case InstructionNumber::Type::I64:
+                        currentFunction->parameters.push_back(VariableType::is_int64);
+                        break;
+                    case InstructionNumber::Type::F32:
+                        currentFunction->parameters.push_back(VariableType::isfloat32_t);
+                        break;
+                    case InstructionNumber::Type::F64:
+                        currentFunction->parameters.push_back(VariableType::isfloat64_t);
+                        break;
+                }
+                i++;
+            }
+            continue;
+        }
+        if (token.string_value == "result") {
+            i++;
+            while (tokens[i].string_value != ")") {
+                switch(InstructionNumber::getType(tokens[i].string_value)) {
+                    case InstructionNumber::Type::I32:
+                        currentFunction->results.push_back(VariableType::is_int32);
+                        break;
+                    case InstructionNumber::Type::I64:
+                        currentFunction->results.push_back(VariableType::is_int64);
+                        break;
+                    case InstructionNumber::Type::F32:
+                        currentFunction->results.push_back(VariableType::isfloat32_t);
+                        break;
+                    case InstructionNumber::Type::F64:
+                        currentFunction->results.push_back(VariableType::isfloat64_t);
+                        break;
+                }
+                i++;
+            }
+            continue;
+        }
 
 		if ( token.type == TokenType::KEYWORD ) {
-			InstructionNumber::Operation op = InstructionNumber::getOperation( token.string_value );
+			uint8_t op = InstructionNumber::getOperation( token.string_value );
 			
 			// std::cout << "Parser::ParseProper : token : " << token.string_value << " maps to " << (int) op << std::endl;
 
-			if ( op != InstructionNumber::Operation::NONE ) {
+			if ( op != 0 ) {
 				HACK_inCodeBlock = true;
 
 				if ( InstructionNumber::isCalculation(op) ) {
 					Instruction *instruction = instruction = new Instruction( InstructionType::CALCULATION );
 					instruction->instruction_code = (int) op;
-					output.push_back( instruction );
+					output->push_back( instruction );
 				}
 				else if ( InstructionNumber::isConst(op) ) {
 					Instruction *instruction = instruction = new Instruction( InstructionType::CONST );
@@ -120,7 +181,7 @@ std::vector<Instruction*> Parser::parseProper()
 					Token parameter = tokens[++i]; // parameter MUST be next behind this
 					instruction->parameter = parameter.uint32_value;
 
-					output.push_back( instruction );
+					output->push_back( instruction );
 				}
 				else if ( InstructionNumber::hasParameter(op) ) {
 					Instruction *instruction = instruction = new Instruction( InstructionType::INSTRUCTION_WITH_PARAMETER );
@@ -128,12 +189,12 @@ std::vector<Instruction*> Parser::parseProper()
 					Token parameter = tokens[++i]; // parameter MUST be next behind this
 					instruction->parameter = parameter.uint32_value;
 
-					output.push_back( instruction );
+					output->push_back( instruction );
 				}
 				else if ( InstructionNumber::hasNoParameter(op) ) {
 					Instruction *instruction = instruction = new Instruction( InstructionType::INSTRUCTION_WITHOUT_PARAMETER );
 					instruction->instruction_code = (int) op;
-					output.push_back( instruction );
+					output->push_back( instruction );
 				}
 				else {
 					std::cout << "Parser::ParseProper : unsupported operation found : " << (int) op << std::endl;
@@ -149,7 +210,7 @@ std::vector<Instruction*> Parser::parseProper()
 						// Types are always without parameter
 						Instruction *instruction = instruction = new Instruction( InstructionType::INSTRUCTION_WITHOUT_PARAMETER );
 						instruction->instruction_code = (int) type;
-						output.push_back( instruction );
+						output->push_back( instruction );
 					}
 				}
 			}
@@ -165,10 +226,15 @@ std::vector<Instruction*> Parser::parseProper()
 			std::cout << "Parser::ParseProper : unsupported TokenType found : " << (int) token.type << " for " << token.uint32_value << " OR " << token.string_value << std::endl;
 		}
 	}
-
+    if (currentFunction != nullptr) {
+        output->push_back(new Instruction(InstructionType::INSTRUCTION_WITHOUT_PARAMETER, constants::BLOCK_END));
+        currentFunction->body = output;
+        functions.push_back(currentFunction);
+    }
+/*
 	for ( auto instruction : output ) {
 		std::cout << "Instruction " << (int) instruction->type << " for operation " << instruction->instruction_code << " with potential parameter " << instruction->parameter << std::endl;
 	}
-
-	return output;
+*/
+	return *output;
 }

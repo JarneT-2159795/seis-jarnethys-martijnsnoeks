@@ -6,39 +6,32 @@
 #include <string>
 
 #include "compiler.h"
+#include "constants.h"
 
-Compiler::Compiler(std::vector<Instruction*> input)
-{
-	// TODO: now we just make a big bytestream of size 2000 bytes filled with \0
-	// this should be better (e.g., grow dynamically as we compile more in increments!)
-    this->output = new ByteStream();
-    
-    this->instructions = input;
-}
+ByteStream* Compiler::compileBody(std::vector<Instruction*> body) {
+    fullOutput->writeByte(0);
+    int bodyFixup = fullOutput->getCurrentByteIndex();
+    fullOutput->writeByte(0); // TODO local variables
 
-ByteStream* Compiler::compile()
-{
     // NOTE: comment this out to see "original" compiler output
-    this->instructions = this->foldConstants( this->instructions );
+    //body = this->foldConstants( body );
 
-    for (uint8_t byte : {0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00}) { // magic number and version
-        this->output->writeByte(byte);
-    }
-    for ( auto instruction : this->instructions ) {
-        this->output->writeUInt32( instruction->instruction_code );
+    for ( auto instruction : body ) {
+        fullOutput->writeByte( instruction->instruction_code );
 
         if ( instruction->type == InstructionType::CONST || instruction->type == InstructionType::INSTRUCTION_WITH_PARAMETER ) {
-            this->output->writeUInt32( instruction->parameter );
+            fullOutput->writeUInt32( instruction->parameter );
         }
     }
+    fullOutput->fixUpByte(bodyFixup - 1, fullOutput->getCurrentByteIndex() - bodyFixup);
     
 
-    int writtenByteCount = output->getCurrentByteIndex() - 1; // -1 because byteIndex is ready to write a new byte now!
+    //int writtenByteCount = output->getCurrentByteIndex() - 1; // -1 because byteIndex is ready to write a new byte now!
 
-	output->setByteIndex(0);
+	//output->setByteIndex(0);
 
-	std::cout << "Nr bytes written " << writtenByteCount << std::endl;
-
+	//std::cout << "Nr bytes written " << writtenByteCount << std::endl;
+/*
 	int c = 0;
 	while( c <= writtenByteCount ) { 
 		unsigned char byte = output->readByte();
@@ -47,14 +40,12 @@ ByteStream* Compiler::compile()
 
 		++c;
 	}
-
-    output->writeFile("output.wasm");
-    return this->output;
+*/
+    return fullOutput;
 }
 
 
-std::vector<Instruction*> Compiler::foldConstants(std::vector<Instruction*> input)
-{
+std::vector<Instruction*> Compiler::foldConstants(std::vector<Instruction*> input) {
     std::vector<Instruction*> output;
 
     // Logic: we want to fold constants and their operations here
@@ -108,7 +99,7 @@ std::vector<Instruction*> Compiler::foldConstants(std::vector<Instruction*> inpu
 					folded->instruction_code = (int) instruction->instruction_code; // is i32.const!
 
                     // TODO: support other things besides i32.add!!!
-                    if ( nextnext->instruction_code == (int) InstructionNumber::Operation::I32ADD ) {
+                    if ( nextnext->instruction_code == (int) constants::I32ADD ) {
 					    folded->parameter = instruction->parameter + next->parameter;
                         
                         std::cout << "Compiler::foldConstants : Folded " << instruction->parameter << " + " << next->parameter << " to " << folded->parameter << std::endl;
@@ -135,4 +126,122 @@ std::vector<Instruction*> Compiler::foldConstants(std::vector<Instruction*> inpu
     }
 
     return output;
+}
+
+ByteStream *Compiler::compile() {
+    // magic number and version
+    for (uint8_t byte : {0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00}) {
+        fullOutput->writeByte(byte);
+    }
+
+    // type section
+    fullOutput->writeByte(0x01);
+    fullOutput->writeByte(0);
+    int fixUpByte(fullOutput->getCurrentByteIndex());
+    writeTypeSection();
+    fullOutput->fixUpByte(fixUpByte - 1, fullOutput->getCurrentByteIndex() - fixUpByte);
+
+    // function section
+    fullOutput->writeByte(0x03);
+    fullOutput->writeByte(1 + functions.size());
+    fullOutput->writeByte(functions.size());
+    for (auto func : functions) {
+        for (int i = 0; i < functionTypes.size(); i++) {
+            auto type = functionTypes[i];
+            if (type[0] == func->parameters && type[1] == func->results) {
+                fullOutput->writeByte(i);
+                break;
+            }
+        }
+    }
+
+    // export section
+    fullOutput->writeByte(0x07);
+    fullOutput->writeByte(0);
+    fixUpByte = fullOutput->getCurrentByteIndex();
+    writeExportSection();
+    fullOutput->fixUpByte(fixUpByte - 1, fullOutput->getCurrentByteIndex() - fixUpByte);
+
+    // code section
+    fullOutput->writeByte(0x0A);
+    fullOutput->writeByte(0);
+    fixUpByte = fullOutput->getCurrentByteIndex();
+    fullOutput->writeByte(functions.size());
+    for (auto function : functions) {
+        compileBody(*function->body);
+    }
+    fullOutput->fixUpByte(fixUpByte - 1, fullOutput->getCurrentByteIndex() - fixUpByte);
+
+    fullOutput->writeFile("./output.wasm");
+    return fullOutput;
+}
+
+void Compiler::writeTypeSection() {
+    // find function types
+    for (auto function : functions) {
+        bool exists = false;
+        for (auto type : functionTypes) {
+            if (type[0] == function->parameters && type[1] == function->results) {
+                exists = true;
+                break;
+            }
+        }
+        if (!exists) {
+            auto arr = std::array<std::vector<VariableType>, 2>();
+            arr[0] = function->parameters;
+            arr[1] = function->results;
+            functionTypes.push_back(arr);
+        }
+    }
+
+    fullOutput->writeByte(functionTypes.size());
+    for (auto type : functionTypes) {
+        fullOutput->writeByte(0x60);
+        fullOutput->writeByte(type[0].size());
+        for (auto par : type[0]) {
+            switch (par) {
+                case VariableType::is_int32:
+                    fullOutput->writeByte(constants::INT32);
+                    break;
+                case VariableType::is_int64:
+                    fullOutput->writeByte(constants::INT64);
+                    break;
+                case VariableType::isfloat32_t:
+                    fullOutput->writeByte(constants::FLOAT32);
+                    break;
+                case VariableType::isfloat64_t:
+                    fullOutput->writeByte(constants::FLOAT64);
+                    break;
+            }
+        }
+        fullOutput->writeByte(type[1].size());
+        for (auto par : type[1]) {
+            switch (par) {
+                case VariableType::is_int32:
+                    fullOutput->writeByte(constants::INT32);
+                    break;
+                case VariableType::is_int64:
+                    fullOutput->writeByte(constants::INT64);
+                    break;
+                case VariableType::isfloat32_t:
+                    fullOutput->writeByte(constants::FLOAT32);
+                    break;
+                case VariableType::isfloat64_t:
+                    fullOutput->writeByte(constants::FLOAT64);
+                    break;
+            }
+        }
+    }
+}
+
+void Compiler::writeExportSection() {
+    fullOutput->writeByte(functions.size());
+    for (int i = 0; i < functions.size(); i++) {
+        fullOutput->writeByte(functions[i]->name.size());
+        for (auto c : functions[i]->name) {
+            fullOutput->writeByte(c);
+        }
+        fullOutput->writeByte(0); // TODO add different exports
+        fullOutput->writeByte(i);
+    }
 }

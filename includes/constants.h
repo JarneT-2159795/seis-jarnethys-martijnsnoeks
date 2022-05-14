@@ -1,3 +1,6 @@
+#ifndef _CONSTANTS_H_
+#define _CONSTANTS_H_
+
 namespace constants {
 
 // File sections
@@ -108,3 +111,5 @@ namespace constants {
     const uint8_t MEMORY_BULK_OP = 0xFC;
 
 }
+
+#endif

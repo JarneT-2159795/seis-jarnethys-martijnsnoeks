@@ -45,21 +45,25 @@ int Lexer::lex()
         else if ( Character::isWASMIdentifier(nextChar) ){
             this->tokens.push_back( this->parseKeyword() );
         }
-        else if ( nextChar == '"' ) {
-            this->tokens.push_back( this->parseString() );
-        }
-        else if ( nextChar == '(' ) {
-            this->tokens.push_back( Token(TokenType::BRACKETS_OPEN, std::string(1, this->byteStream->readByte())) ) ;
-        }
-        else if ( nextChar == ')' ) {
-            this->tokens.push_back( Token(TokenType::BRACKETS_CLOSED, std::string(1, this->byteStream->readByte())) ) ;
-        }
-        else if ( nextChar == ';' ) {
-            this->parseComment();
-        }
         else {
-            std::cout << "Unknown character " << this->byteStream->peekByte() << " at byte " << this->byteStream->getCurrentByteIndex() << std::endl;
-            this->tokens.push_back( Token(TokenType::STRING, std::string(1, this->byteStream->readByte())) ) ;
+            switch (nextChar) {
+                case '"':
+                    this->tokens.push_back( this->parseString() );
+                    break;
+                case '(':
+                    this->tokens.emplace_back(TokenType::BRACKETS_OPEN, std::string(1, this->byteStream->readByte()) ) ;
+                    break;
+                case ')':
+                    this->tokens.push_back( Token(TokenType::BRACKETS_OPEN, std::string(1, this->byteStream->readByte())) ) ;
+                    break;
+                case ';':
+                    this->parseComment();
+                    break;
+                default:
+                    std::cout << "Unknown character " << this->byteStream->peekByte() << " at byte " << this->byteStream->getCurrentByteIndex() << std::endl;
+                    this->tokens.push_back( Token(TokenType::STRING, std::string(1, this->byteStream->readByte())) ) ;
+                    break;
+            }
         }
 
         // TODO: support:
@@ -69,7 +73,7 @@ int Lexer::lex()
         // - floating point numbers https://webassembly.github.io/spec/core/text/values.html#floating-point
 
 	}
-
+/*
     std::cout << "Token Count : " << this->tokens.size() << std::endl;
 
     for ( auto token : this->tokens ) {
@@ -82,7 +86,7 @@ int Lexer::lex()
     }
     
     std::cout << std::endl;
-
+*/
     return 0;
 }
 

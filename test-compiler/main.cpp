@@ -20,13 +20,15 @@ int main()
 
     Parser parser = Parser(&lexer);
 
-    ByteStream* compiledOutput = parser.parseSimple();
+    //ByteStream* compiledOutput = parser.parseSimple();
     std::vector<Instruction*> AST = parser.parseProper();
+    auto functions = parser.getFunctions();
     
     std::cout << "DONE PARSING " << std::endl;
 
-    Compiler compiler = Compiler(AST);
-    compiledOutput = compiler.compile();
+    //Compiler compiler = Compiler(AST);
+    Compiler compiler = Compiler(functions);
+    auto compiledOutput = compiler.compile();
 
     std::cout << "DONE COMPILING " << std::endl;
 }

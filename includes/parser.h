@@ -5,19 +5,21 @@
 
 
 #include "lexer.h"
-#include "instruction.h"
+#include "AST_Function.h"
 
-class Parser
-{
+class Parser {
 private:
     Lexer *lexer;
+    std::vector<AST_Function*> functions;
+    AST_Function* currentFunction = nullptr;
 
 public:
 	Parser(Lexer *lexer) : lexer(lexer) {}
     ~Parser() {}
     
-    ByteStream* parseSimple();
+    //ByteStream* parseSimple();
     std::vector<Instruction*> parseProper();
+    std::vector<AST_Function*> getFunctions() { return functions; }
 };
 
 #endif // __PARSER_H__
