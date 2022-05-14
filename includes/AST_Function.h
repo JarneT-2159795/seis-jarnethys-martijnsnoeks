@@ -4,8 +4,7 @@
 #include <vector>
 #include <string>
 #include "instruction.h"
-
-enum class VariableType { is_int32, is_int64, isfloat32_t, isfloat64_t };
+#include "variabletype.h"
 
 typedef struct AST_Function {
     std::string name;
