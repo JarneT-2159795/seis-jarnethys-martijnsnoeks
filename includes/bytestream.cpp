@@ -5,6 +5,7 @@
 #include <bitset>
 #include <string.h>
 #include <stdexcept>
+#include <sstream>
 
 ByteStream::ByteStream(std::string filepath) : currentByteIndex{ 0 } {
     if (filepath.find(".wat") != std::string::npos) {
