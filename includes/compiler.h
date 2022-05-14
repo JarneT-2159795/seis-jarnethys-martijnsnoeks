@@ -35,6 +35,7 @@ public:
     ~Compiler() {}
     
     ByteStream* compile();
+    void writeFile(std::string filepath) { fullOutput->writeFile(filepath); };
 };
 
 #endif // __COMPILER_H__

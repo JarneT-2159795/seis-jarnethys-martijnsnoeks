@@ -172,7 +172,6 @@ ByteStream *Compiler::compile() {
     }
     fullOutput->fixUpByte(fixUpByte - 1, fullOutput->getCurrentByteIndex() - fixUpByte);
 
-    fullOutput->writeFile("./output.wasm");
     return fullOutput;
 }
 
