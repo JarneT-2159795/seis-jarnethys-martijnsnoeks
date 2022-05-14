@@ -7,20 +7,28 @@
 #include <stdexcept>
 
 ByteStream::ByteStream(std::string filepath) : currentByteIndex{ 0 } {
-    std::ifstream f(filepath, std::ios::binary);
-    if (f.is_open()) {
-        // Get length of file:
-        f.seekg (0, f.end);
-        size = f.tellg();
-        f.seekg (0, f.beg);
-        if (filepath.find(".wat") != std::string::npos) {
-            size--;
-        }
+    if (filepath.find(".wat") != std::string::npos) {
+        std::ifstream f(filepath);
+        std::stringstream ss;
+        ss << f.rdbuf();
+        std::string file(ss.str());
+        buffer = std::vector<uint8_t>(file.begin(), file.end());
+        size = buffer.size();
+    } else if (filepath.find(".wasm") != std::string::npos) {
+        std::ifstream f(filepath, std::ios::binary);
+        if (f.is_open()) {
+            // Get length of file:
+            f.seekg (0, f.end);
+            size = f.tellg();
+            f.seekg (0, f.beg);
 
-        buffer.reserve(size);
-        f.read((char*)buffer.data(), size);
+            buffer.reserve(size);
+            f.read((char*)buffer.data(), size);
+        }
+        f.close();
+    } else {
+        throw std::invalid_argument("Unsupported file: " + filepath);
     }
-    f.close();
 }
 
 ByteStream::ByteStream(std::vector<uint8_t> stream) : currentByteIndex{ 0 } {
@@ -37,6 +45,10 @@ ByteStream::ByteStream(uint8_t *data, int size) : currentByteIndex{ 0 } {
 }
 
 ByteStream::~ByteStream() {
+}
+
+void ByteStream::addFromByteStream(ByteStream *stream) {
+    buffer.insert(buffer.end(), stream->buffer.begin(), stream->buffer.end());
 }
 
 void ByteStream::readFile(std::string filepath) {

@@ -22,6 +22,7 @@ public:
     ByteStream() : currentByteIndex(0), buffer(), size(0) {};
     ~ByteStream();
 
+    void addFromByteStream(ByteStream *stream);
     void readFile(std::string filepath);
     void readVector(std::vector<uint8_t> vector);
 
@@ -35,6 +36,7 @@ public:
 
     void writeByte(uint8_t byte);
     void writeUInt32(uint32_t value);
+    void fixUpByte(int index, uint8_t byte) { buffer[index] = byte; };
 
     std::string readASCIIString(int length);
 
