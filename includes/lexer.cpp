@@ -13,6 +13,11 @@ Lexer::Lexer(std::string path) // : currentByteIndex{ new uint32_t(0) }
     this->byteStream = new ByteStream{path};
 }
 
+Lexer::Lexer(std::vector<uint8_t> stream) {
+    this->byteStream = new ByteStream();
+    byteStream->readCharVector(stream);
+}
+
 Lexer::~Lexer()
 {
     delete this->byteStream;    
