@@ -25,4 +25,4 @@ add_executable(seis_jarnethys_martijnsnoeks
         includes/stack.h
         includes/token.h
         test-compiler/main.cpp
-)
+        includes/AST_Function.h)
