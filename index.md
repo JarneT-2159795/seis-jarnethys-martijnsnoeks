@@ -288,7 +288,34 @@ We can use the build output to see how each section is represented in the final 
 
 ### Type section
 
-This section stores information about function types. This consists of the amount of parameters and amount of results and their respective types. The code to parse this section is as follows:
+This section stores information about function types. These function types indicate which parameters the function expects and which result types the function generates. As you can see below the type section is relatively simple to decode. The section code 0x1 is followed by the size of the section in bytes (this is standard for every section) and the amount of function types in the file. When decoding the file we have to be careful as multiple function with the same function type will only be written once. This means that the number of function types doesn't always equal the number of functions.
+
+After all of this there will be a sequence of function types. Each type can be recognized by the 0x60 byte in front. This byte is followed by a byte indicating the number of parameters and a byte per parameter indicting the type. Possible parameter types are shown in the table below. Next a byte indicates the number of result types followed by a byte for every result type just like the parameter bytes earlier.
+|Byte|Type|
+|----|----|
+|0x7F|i32|
+|0x7E|i64|
+|0x7D|f32|
+|0x7C|f64|
+
+```
+
+; section "Type" (1)
+0000008: 01                                        ; section code
+0000009: 00                                        ; section size (guess)
+000000a: 01                                        ; num types
+; func type 0
+000000b: 60                                        ; func
+000000c: 02                                        ; num params
+000000d: 7f                                        ; i32
+000000e: 7f                                        ; i32
+000000f: 01                                        ; num results
+0000010: 7f                                        ; i32
+0000009: 07                                        ; FIXUP section size
+
+```
+
+As this is a relatively simple section the code to read this section is simple too. We read in a while loop as long as we find a 0x60 byte indicating that a function type is present. When another byte is found we set the reading index of the bytestream at the previous position as this is another section. When reading a function type we first save the number of parameters. Next we add the each of the parameters to a vector so we can use them later on. We can't save them to a function yet because we haven't read the functions at this point.
 
 ```c++
 
@@ -305,7 +332,6 @@ void Module::readTypeSection(int length) {
         for (int i = 0; i < numResults; ++i) {
             results.push_back(getVarType(bytestr.readByte())); // Store the type of the result
         }
-        // Add the parameters and results to the function
         functionTypes.push_back(params);
         functionTypes.push_back(results);
     }
@@ -316,7 +342,18 @@ void Module::readTypeSection(int length) {
 
 ### Function section
 
-This is a relatively short section as we only have to read the function type for each function and store this in the function. The byte code starts with the number of functions in the module. For each function there is an integer saved which is the index of the function index which we decoded in the function type section.
+This is a very easy section where we just create a placeholder for the functions as the actual code is added at a later stage. This sections has just the number of functions and the function type of each function which we extracted earlier. As we store the parameters and results in one vector right behind eachother we multiply the index by two. You can see we also pass a lot of other variables in the constructor of the function. These will be explained later.
+
+```
+
+; section "Function" (3)
+0000011: 03                                        ; section code
+0000012: 00                                        ; section size (guess)
+0000013: 01                                        ; num functions
+0000014: 00                                        ; function 0 signature index
+0000012: 02                                        ; FIXUP section size
+
+```
 
 ```c++
 
@@ -325,7 +362,59 @@ void Module::readFunctionSection(int length) {
     for (int i = 0; i < numFunctions; ++i) {
         // Read the type of the function
         int signature = 2 * bytestr.readByte(); // We store the parameters and results behind each other so we multiply by two
-        functions.emplace_back(Function(functionTypes[signature], functionTypes[signature + 1], &stack, &functions)); // Add the function
+        functions.emplace_back(Function(functionTypes[signature], functionTypes[signature + 1], 
+                                        &stack, &functions, &globals, &memories)); // Add the function
+    }
+}
+
+```
+
+### Memory section
+
+```c++
+
+void Module::readMemorySection(int length) {
+    int numMemories = bytestr.readByte();
+    for (int i = 0; i < numMemories; ++i) {
+        if (bytestr.readByte()) {
+            uint32_t initial = bytestr.readUInt32();
+            uint32_t maximum = bytestr.readUInt32();
+            memories.emplace_back(Memory(initial, maximum));
+        } else {
+            uint32_t initial = bytestr.readUInt32();
+            memories.emplace_back(Memory(initial));
+        }
+    }
+}
+
+```
+
+### Global section
+
+```c++
+
+void Module::readGlobalSection(int length) {
+    int numGlobals = bytestr.readByte();
+    for (int i = 0; i < numGlobals; ++i) {
+        bytestr.seek(1); // skip the type
+        bool isConst = bytestr.readByte() == 0;
+        switch (bytestr.readByte()) {
+            case I32CONST:
+                globals.emplace_back(GlobalVariable(Variable(bytestr.readInt32()), isConst));
+                break;
+            case I64CONST:
+                globals.emplace_back(GlobalVariable(Variable(bytestr.readInt64()), isConst));
+                break;
+            case F32CONST:
+                globals.emplace_back(GlobalVariable(Variable(bytestr.readFloat32()), isConst));
+                break;
+            case F64CONST:
+                globals.emplace_back(GlobalVariable(Variable(bytestr.readFloat64()), isConst));
+                break;
+            default:
+                throw ModuleException("Invalid file: not a valid global type", bytestr.getCurrentByteIndex());
+        }
+        bytestr.seek(1); // skip the end of the global
     }
 }
 
@@ -333,16 +422,39 @@ void Module::readFunctionSection(int length) {
 
 ### Export section
 
-The export section 
+
+
+```
+
+; section "Export" (7)
+0000015: 07                                        ; section code
+0000016: 00                                        ; section size (guess)
+0000017: 01                                        ; num exports
+0000018: 06                                        ; string length
+0000019: 6164 6454 776f                           addTwo  ; export name
+000001f: 00                                        ; export kind
+0000020: 00                                        ; export func index
+0000016: 0a                                        ; FIXUP section size
+
+```
 
 ```c++
 
 void Module::readExportSection(int length) {
-    int exports = bytestr.readByte(); // Amount of function names
+    int exports = bytestr.readByte();
     for (int i = 0; i < exports; ++i) {
-        auto name = bytestr.readASCIIString(bytestr.readByte()); // Read the name with the given length
-        bytestr.seek(1); // Export kind
-        functions[bytestr.readUInt32()].setName(name); // Set the name for the function with the given index
+        auto name = bytestr.readASCIIString(bytestr.readByte());
+        uint8_t kind = bytestr.readByte();
+        switch (kind) {
+            case 0x00: // function
+                functions[bytestr.readUInt32()].setName(name);
+                break;
+            case 0x02: // memory
+                memories[bytestr.readUInt32()].setName(name);
+                break;
+            default:
+                throw ModuleException("Invalid file: not a valid export kind", bytestr.getCurrentByteIndex());
+        }
     }
 }
 
