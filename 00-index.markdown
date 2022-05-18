@@ -9,7 +9,7 @@ permalink: /
 
 ## What is this?
 
-This blog documents everything we did to create our very own WebAssembly virtual machine and compiler. Furthermore it will show how we deployed these to a Cloudflare worker. We also discuss a paper about WebAssembly we read. We've made the following posts:
+This blog documents everything we did to create our very own WebAssembly virtual machine and compiler in C++. Furthermore it will show how we deployed these to a Cloudflare worker. We also discuss a paper about WebAssembly we read. We've written a post for each part:
 
 <ul>
 <li><a href="/seis-jarnethys-martijnsnoeks/wasm-vm">WebAssembly virtual machine</a></li>
