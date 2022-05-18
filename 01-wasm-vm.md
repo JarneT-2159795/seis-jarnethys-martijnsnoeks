@@ -1,14 +1,18 @@
 ---
 layout: page
 title: WebAssembly VM
-permalink: /wasm-vm/
+permalink: /wasm-vm
 ---
 
-# Introduction
+## Introduction
 
-# Reading a binary WebAssembly file
+Intro hier
 
-## Basics: reading a binary file in C++
+
+## Reading a binary WebAssembly file
+
+
+### Basics: reading a binary file in C++
 
 The following code reads the contents of a binary file one byte at a time and stores these in a std::vector. The bytes can be read using the readByte-function. This will return the next byte in the stream or a out of range-exception when there are no more bytes. The full code can be found on [Github in the ByteStream class](https://github.com/JarneT-2159795/seis-jarnethys-martijnsnoeks/blob/main/includes/bytestream.cpp).
 
@@ -36,11 +40,11 @@ uint8_t ByteStream::readByte() {
 
 ```
 
-## Parsing numbers
+### Parsing numbers
 
-### Integers
+#### Integers
 
-#### Encoding unsigned integers
+##### Encoding unsigned integers
 
 Integers in WebAssembly are Little Endian Base 128 (LEB128) encoded. This is a way to store integers with a variable amount of bits, thus using less memory. For more information you can visit [Wikipedia](https://en.wikipedia.org/wiki/LEB128).
 
@@ -64,7 +68,7 @@ Before decoding the integers it's important to understand how they are encoded. 
 
 ```
 
-#### Encoding signed integers
+##### Encoding signed integers
 
 Signed integers require two extra steps to transform the binary number to it's two's complement.
 
@@ -90,7 +94,7 @@ Signed integers require two extra steps to transform the binary number to it's t
 
 ```
 
-#### Decoding unsigned integers
+##### Decoding unsigned integers
 
 To decode an unsigned integer we reverse the process above. The example will decode the bytes 959AEF3A to 123456789. Below is also a C++ implementation which reads the bytes using the readByte-function shown earlier.
 
@@ -131,7 +135,7 @@ uint32_t ByteStream::readUInt32() {
 
 ```
 
-#### Decoding signed integers
+##### Decoding signed integers
 
 Decoding a signed integer follows the same steps as for an unsigned integer except when we have read all the bytes we perform a sign extension. Sign extension increases the amount of bits of a binary number while also preserving it's sign and value. As we have a binary number represented by it's two's complement we insert bits to the left with the same value as the sign bit. When the sign bit is low we don't have to perform this operation because the bits that are not represented will be zero automatically. An important note when decoding 64 bit integers is to cast the result of the bitwise and between the byte and 0111 1111 to a 64 bit integer before performing the bitwise or with the result. Otherwise a bitwise or between a 64 and 32 bit integer will be performed resulting in wrong results. Again a C++ implementation as shown.
 
@@ -177,7 +181,7 @@ int64_t ByteStream::readInt64() {
 
 ```
 
-### Floating-Point
+#### Floating-Point
 
 Decoding a float in WebAssembly is much more straightforward in respect to the integers. As the floating point numbers are not encoded in a special format the bytes can just be read from the stream and the bits placed in their corresponding location in the resulting float. The C++ implementation can be found below.
 
@@ -203,7 +207,7 @@ _Float64 ByteStream::readFloat64() {
 
 ```
 
-## Parsing strings
+### Parsing strings
 
 Parsing strings from bytecode is rather simple because all ASCII characters are represented by bytes anyway. Given the length of the string each byte can be read, converted to a character and appended to the final string.
 
@@ -221,7 +225,7 @@ std::string ByteStream::readASCIIString(int length) {
 
 ```
 
-## Structure of a binary WebAssembly file
+### Structure of a binary WebAssembly file
 
 The following code will read the contents of a binary file and parse it so the functions can be used in C++. A binary file consists of different sections, each describing a different part of the code. Each section needs to be parsed and the information stored in the right function so it can be used later when we want to call a function. The full code for this part can be found on [Github in the Module class](https://github.com/JarneT-2159795/seis-jarnethys-martijnsnoeks/blob/main/includes/module.cpp). For the following examples we will use the following WebAssembly code:
 
@@ -288,7 +292,7 @@ We can use the build output to see how each section is represented in the final 
 
 ```
 
-### Type section
+#### Type section
 
 This section stores information about function types. These function types indicate which parameters the function expects and which result types the function generates. As you can see below the type section is relatively simple to decode. The section code 0x1 is followed by the size of the section in bytes (this is standard for every section) and the amount of function types in the file. When decoding the file we have to be careful as multiple function with the same function type will only be written once. This means that the number of function types doesn't always equal the number of functions.
 
@@ -342,7 +346,7 @@ void Module::readTypeSection(int length) {
 
 ```
 
-### Function section
+#### Function section
 
 This is a very easy section where we just create a placeholder for the functions as the actual code is added at a later stage. This sections has just the number of functions and the function type of each function which we extracted earlier. As we store the parameters and results in one vector right behind eachother we multiply the index by two. You can see we also pass a lot of other variables in the constructor of the function. These will be explained later.
 
@@ -371,7 +375,7 @@ void Module::readFunctionSection(int length) {
 
 ```
 
-### Memory section
+#### Memory section
 
 ```c++
 
@@ -391,7 +395,7 @@ void Module::readMemorySection(int length) {
 
 ```
 
-### Global section
+#### Global section
 
 ```c++
 
@@ -422,7 +426,7 @@ void Module::readGlobalSection(int length) {
 
 ```
 
-### Export section
+#### Export section
 
 
 
@@ -462,7 +466,7 @@ void Module::readExportSection(int length) {
 
 ```
 
-### Code section
+#### Code section
 
 The code section contains the actual instructions for the program to function. First we read the amount of functions in the module. For each function we save the size of the body with the instructions. This section also contains the local variables for each function. We save these now so it's already done when we want to run the function. The amount of local variables is removed from the function body. For each local variable we read it's type and save it in the function. We first read how many variables of a given type are in the function. After this we read the type of the local variable and add the type and amount to the function.
 
