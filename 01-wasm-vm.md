@@ -1,31 +1,80 @@
 ---
 layout: page
-title: WebAssembly VM
+title: WebAssembly virtual machine
 permalink: /wasm-vm
 ---
 
 ## Introduction
 
-Intro hier
+In the following post you will find all the information you need to build a virtual machine or interpreter for WebAssembly (WASM). Of course we haven't implemented all WebAssembly features as we didn't have the time or knowledge for some features. Nevertheless are we happy with how it turned out as we can perform a lot of the basic operations you would want for a simple WASM module.
 
+WebAssembly in it's most basic form exists in two types of files. First we have .wat files. These are the text files in which you code your WebAssembly module. When such a file is compiled with a tool like <a href="https://github.com/WebAssembly/wabt" target="_blank">wat2wasm from the WebAssembly Binary Toolkit</a> you end up with a .wasm file. These are binary files encoded according to the <a href="https://webassembly.github.io/spec/core/binary/index.html" target="_blank">WebAssembly specification</a>. Below you can find an example of a WASM module with four functions. Each function adds two numbers from the same type and returns the result.
+
+```js
+
+(module
+  (func (export "addi32") (param i32 i32) (result i32)
+    local.get 0
+    local.get 1
+    i32.add
+  )
+  (func (export "addi64") (param i64 i64) (result i64)
+    local.get 0
+    local.get 1
+    i64.add
+  )
+  (func (export "addf32") (param f32 f32) (result f32)
+    local.get 0
+    local.get 1
+    f32.add
+  )
+  (func (export "addf64") (param f64 f64) (result f64)
+    local.get 0
+    local.get 1
+    f64.add
+  )
+)
+
+```
+
+As you can see in the example above the basic WebAssembly syntax as still pretty easy readable. A function is started with the func keyword. a function has a few (optional) attributes. With export you can specify a name for the function when using it in for example javascript. param and result are both followed by a sequence of types for respectively the parameters and results of the function. After these the actual function code follows. As you can see we can use parentheses like we would use curly braces in C or C++. After compiling this file to WASM byte code we get the following output if we read the file byte by byte.
+
+```
+
+7f 60 02 7e 7e 01 7e 60 02 7d 7d 01 7d 60 02 7c 
+7c 01 7c 03 05 04 00 01 02 03 07 25 04 06 61 64 
+64 69 33 32 00 00 06 61 64 64 69 36 34 00 01 06 
+61 64 64 66 33 32 00 02 06 61 64 64 66 36 34 00 
+03 0a 21 04 07 00 20 00 20 01 6a 0b 07 00 20 00 
+20 01 7c 0b 07 00 20 00 20 01 92 0b 07 00 20 00 
+20 01 a0 0b
+
+```
+
+It's obvious that this isn't meant to be manually decoded. In the following chapters we will explain how we tackled this problem by implementing our own VM/interpreter for wasm files in C++. All of the code can be found in our <a href="https://github.com/JarneT-2159795/seis-jarnethys-martijnsnoeks" target="_blank">Github repository</a>
 
 ## Reading a binary WebAssembly file
 
+If we wan't to execute the code encoded in the files the very first thing we have to implement is a bytestream class which can be given the path to a file and read and store the bytes in this file.
 
-### Basics: reading a binary file in C++
+### Reading a binary file in C++
 
-The following code reads the contents of a binary file one byte at a time and stores these in a std::vector. The bytes can be read using the readByte-function. This will return the next byte in the stream or a out of range-exception when there are no more bytes. The full code can be found on [Github in the ByteStream class](https://github.com/JarneT-2159795/seis-jarnethys-martijnsnoeks/blob/main/includes/bytestream.cpp).
+The following code will first get the length of the file and reserve the needed space in a `std::vector`. After we know the amount of bytes we can copy them into the vector. The bytes can be read using `readByte()`. This will return the next byte in the stream or a out of range-exception when there are no more bytes. The full code with some additional functions can be found on <a target="_blank" href="https://github.com/JarneT-2159795/seis-jarnethys-martijnsnoeks/blob/main/includes/bytestream.cpp">Github in the ByteStream class</a>.
 
 ```c++
 
-ByteStream::ByteStream(std::string filepath) {
+void ByteStream::readFile(std::string filepath) {
+    buffer.clear();
+    currentByteIndex = 0;
     std::ifstream f(filepath, std::ios::binary);
     if (f.is_open()) {
-        char c;
-        while (!f.eof()) {
-            f.read(&c, 1);
-            buffer.push_back((uint8_t)c);
-        }
+        // Get length of file:
+        f.seekg (0, f.end);
+        size = f.tellg();
+        f.seekg (0, f.beg);
+
+        buffer.reserve(size);
+        f.read((char*)buffer.data(), size);
     }
     f.close();
 }
@@ -44,11 +93,11 @@ uint8_t ByteStream::readByte() {
 
 #### Integers
 
-##### Encoding unsigned integers
+#### Encoding unsigned integers
 
-Integers in WebAssembly are Little Endian Base 128 (LEB128) encoded. This is a way to store integers with a variable amount of bits, thus using less memory. For more information you can visit [Wikipedia](https://en.wikipedia.org/wiki/LEB128).
+Integers in WebAssembly are Little Endian Base 128 (LEB128) encoded. This is a way to store integers with a variable amount of bits, thus using less memory. This is especially useful with relatively small numbers as we typically use. A standard 32 bit integer uses four bytes to store it's value. Usually a lot of these get wasted because they are just all 0's. The LEB128 compression uses only seven bits per byte to actually store the value of the integer. The eight bit indicates whether another byte follows are not. This eliminates the need for all the wasted bytes to be included. For example all numbers smaller than 128 will fit in the seven bytes and three bytes can be omitted. For more information you can visit <a href="https://en.wikipedia.org/wiki/LEB128" target="_blank">Wikipedia</a>.
 
-Before decoding the integers it's important to understand how they are encoded. We'll explain this with the number 147258 which is represented as BAFE08 in LEB128. The steps for encoding an unsigned integer using two's complement are as follows:
+Before we will start decoding the integers it's important to understand how they are encoded. We'll explain this with the number 147258 which is represented as BAFE08 in LEB128. The steps for encoding an unsigned integer using two's complement are as follows:
 
 1. Convert the positive number to binary
 2. Add zeros to the left so you end op with a multiple of seven bits
@@ -68,9 +117,9 @@ Before decoding the integers it's important to understand how they are encoded. 
 
 ```
 
-##### Encoding signed integers
+#### Encoding signed integers
 
-Signed integers require two extra steps to transform the binary number to it's two's complement.
+Signed integers require two extra steps to transform the binary number to it's <a href="https://en.wikipedia.org/wiki/Two%27s_complement" target="_blank">two's complement</a>. The two's complement of an integer is just all of the bits inverted with one added to the new value.
 
 1. Convert the positive number to binary
 2. Add zeros to the left so you end op with a multiple of seven bits
@@ -94,9 +143,9 @@ Signed integers require two extra steps to transform the binary number to it's t
 
 ```
 
-##### Decoding unsigned integers
+#### Decoding unsigned integers
 
-To decode an unsigned integer we reverse the process above. The example will decode the bytes 959AEF3A to 123456789. Below is also a C++ implementation which reads the bytes using the readByte-function shown earlier.
+To decode an unsigned integer we reverse the process above. The example will decode the bytes 959AEF3A to 123456789. Below is also a C++ implementation which reads the bytes using `readByte()` shown earlier.
 
 1. Read a byte
 2. Perform a bitwise or with 0111 1111 to only keep the seven bits that represent part of the number
@@ -135,9 +184,9 @@ uint32_t ByteStream::readUInt32() {
 
 ```
 
-##### Decoding signed integers
+#### Decoding signed integers
 
-Decoding a signed integer follows the same steps as for an unsigned integer except when we have read all the bytes we perform a sign extension. Sign extension increases the amount of bits of a binary number while also preserving it's sign and value. As we have a binary number represented by it's two's complement we insert bits to the left with the same value as the sign bit. When the sign bit is low we don't have to perform this operation because the bits that are not represented will be zero automatically. An important note when decoding 64 bit integers is to cast the result of the bitwise and between the byte and 0111 1111 to a 64 bit integer before performing the bitwise or with the result. Otherwise a bitwise or between a 64 and 32 bit integer will be performed resulting in wrong results. Again a C++ implementation as shown.
+Decoding a signed integer follows the same steps as an unsigned integer except when we have read all the bytes we perform a sign extension. Sign extension increases the amount of bits of a binary number while also preserving it's sign and value. As we have a binary number represented by it's two's complement we insert bits to the left with the same value as the sign bit. When the sign bit is low we don't have to perform this operation because the bits that are not represented will be zero automatically. An important note when decoding 64 bit integers is to cast the result of the bitwise and between the byte and 0111 1111 to a 64 bit integer before performing the bitwise or with the result. Otherwise a bitwise or between a 64 and 32 bit integer will be performed resulting in wrong and unpredictable results. Again a C++ implementation as shown.
 
 1. Read a byte
 2. Perform a bitwise or with 0111 1111 to only keep the seven bits that represent part of the number
@@ -227,7 +276,7 @@ std::string ByteStream::readASCIIString(int length) {
 
 ### Structure of a binary WebAssembly file
 
-The following code will read the contents of a binary file and parse it so the functions can be used in C++. A binary file consists of different sections, each describing a different part of the code. Each section needs to be parsed and the information stored in the right function so it can be used later when we want to call a function. The full code for this part can be found on [Github in the Module class](https://github.com/JarneT-2159795/seis-jarnethys-martijnsnoeks/blob/main/includes/module.cpp). For the following examples we will use the following WebAssembly code:
+The following chapters will read the contents of a binary wasm file and parse it so the functions can be used in C++. A binary wasm file consists of different sections, each describing a different part of the code. Each section needs to be parsed and the information stored in the right function so it can be used later when we want to call the function. The full code for this part can be found on <a href="https://github.com/JarneT-2159795/seis-jarnethys-martijnsnoeks/blob/main/includes/module.cpp" target="_blank">Github in the module class</a>. For the following examples we will use the following simple WebAssembly code:
 
 ```javascript
 
