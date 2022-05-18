@@ -3,6 +3,10 @@
 
 @import "{{ site.theme }}";
 
+header * {
+  min-width: 100%;
+}
+
 main * {
   min-width: 80%;
 }
