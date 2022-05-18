@@ -1,8 +1,10 @@
-# Software Engineering for Integrated Systems
+---
+layout: page
+title: WebAssembly VM
+permalink: /wasm-vm/
+---
 
-# Contents
-
-1. [Reading a binary WebAssembly file](#Reading-a-binary-WebAssembly-file)
+# Introduction
 
 # Reading a binary WebAssembly file
 
@@ -483,3 +485,4 @@ void Module::readCodeSection(int length) {
 }
 
 ```
+
