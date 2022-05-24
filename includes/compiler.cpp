@@ -8,13 +8,16 @@
 #include "compiler.h"
 #include "constants.h"
 
-ByteStream* Compiler::compileBody(std::vector<Instruction*> body) {
+ByteStream* Compiler::compileBody(AST_Function* function) {
+    auto body = *(function->body);
     fullOutput->writeByte(0);
     int bodyFixup = fullOutput->getCurrentByteIndex();
-    fullOutput->writeByte(0); // TODO local variables
 
-    // NOTE: comment this out to see "original" compiler output
-    //body = this->foldConstants( body );
+    fullOutput->writeByte(function->locals.size());
+    for (const auto& local : function->locals) {
+        fullOutput->writeByte(1);
+        fullOutput->writeByte(local.second.second);
+    }
 
     for ( auto instruction : body ) {
         fullOutput->writeByte( instruction->instruction_code );
@@ -168,7 +171,7 @@ ByteStream *Compiler::compile() {
     fixUpByte = fullOutput->getCurrentByteIndex();
     fullOutput->writeByte(functions.size());
     for (auto function : functions) {
-        compileBody(*function->body);
+        compileBody(function);
     }
     fullOutput->fixUpByte(fixUpByte - 1, fullOutput->getCurrentByteIndex() - fixUpByte);
 

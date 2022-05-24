@@ -16,7 +16,7 @@ private:
     std::vector<std::array<std::vector<VariableType>, 2>> functionTypes;
 
     std::vector<Instruction*> foldConstants(std::vector<Instruction*> input);
-    ByteStream* compileBody(std::vector<Instruction*> body);
+    ByteStream* compileBody(AST_Function* function);
     void writeTypeSection();
     ByteStream* writeImportSection();
     ByteStream* writeTableSection();
