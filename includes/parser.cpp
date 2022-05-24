@@ -10,76 +10,6 @@
 #include "instruction.h"
 
 using namespace std;
-/*
-ByteStream* Parser::parseSimple() {
-	std::vector<Token> tokens = this->lexer->getTokens();
-
-	// Simple parser will just go through the tokens and output them as they appear!
-	// TODO: support other things than just code!
-
-	// TODO: now we just make a big bytestream of size 2000 bytes filled with \0
-	// this should be better (e.g., grow dynamically as we compile more in increments!)
-	ByteStream* output = new ByteStream( std::vector<unsigned char>(2000, '\0') );
-	int totalLenght = 0;
-
-	// we only want to output the function body for now, to keep it simple
-	// HACK: assume that only starts with the first valid "operation" we get
-	// TODO: properly parse everything
-	bool HACK_inCodeBlock = false;
-	for ( auto token : tokens ) {
-		if ( token.type == TokenType::KEYWORD ) {
-			InstructionNumber::Operation op = InstructionNumber::getOperation( token.string_value );
-
-			if ( op != InstructionNumber::Operation::NONE ) {
-				HACK_inCodeBlock = true;
-
-				output->writeUInt32( (uint32_t) op );
-			}
-			// KEYWORD is either an instruction or a type (e.g., i32.add or just i32)
-			else {
-				if ( HACK_inCodeBlock ) {
-					InstructionNumber::Type type = InstructionNumber::getType( token.string_value );
-
-					if ( type != InstructionNumber::Type::NONE ) {
-						output->writeUInt32( (uint32_t) op );
-					}
-				}
-			}
-		}
-
-		if ( !HACK_inCodeBlock ) {
-			continue;
-		}
-
-		if ( token.type == TokenType::NUMBER ) {
-			// TODO: support more than just uint32_t!
-			output->writeUInt32( token.uint32_value );
-		}
-
-		// TODO: support strings and proper blocks!
-		// especially the "end" of the function should be derived from its ending BRACKET_CLOSED, not an actual "end" statement
-	}
-
-	int writtenByteCount = output->getCurrentByteIndex() - 1; // -1 because byteIndex is ready to write a new byte now!
-
-	output->setByteIndex(0);
-
-	std::cout << "Nr bytes written " << writtenByteCount << std::endl;
-
-	int c = 0;
-	while( c <= writtenByteCount ) { 
-		unsigned char byte = output->readByte();
-
-		std::cout << std::hex << std::setw(2) << std::setfill('0') << (int) byte << std::dec << std::endl;
-
-		++c;
-	}
-
-	return output;
-}
-
-
-*/
 
 std::vector<Instruction*> Parser::parseProper() {
 	std::vector<Token> tokens = this->lexer->getTokens();
@@ -162,68 +92,87 @@ std::vector<Instruction*> Parser::parseProper() {
             continue;
         }
 
-		if ( token.type == TokenType::KEYWORD ) {
-			uint8_t op = InstructionNumber::getOperation( token.string_value );
-			
-			// std::cout << "Parser::ParseProper : token : " << token.string_value << " maps to " << (int) op << std::endl;
+		switch ( token.type ) {
+            case TokenType::KEYWORD: {
+                uint8_t op = InstructionNumber::getOperation(token.string_value);
 
-			if ( op != 0 ) {
-				HACK_inCodeBlock = true;
+                if (op != 0) {
+                    HACK_inCodeBlock = true;
 
-				if ( InstructionNumber::isCalculation(op) ) {
-					Instruction *instruction = instruction = new Instruction( InstructionType::CALCULATION );
-					instruction->instruction_code = (int) op;
-					output->push_back( instruction );
-				}
-				else if ( InstructionNumber::isConst(op) ) {
-					Instruction *instruction = instruction = new Instruction( InstructionType::CONST );
-					instruction->instruction_code = (int) op;
-					Token parameter = tokens[++i]; // parameter MUST be next behind this
-					instruction->parameter = parameter.uint32_value;
+                    if (InstructionNumber::isCalculation(op)) {
+                        Instruction *instruction = instruction = new Instruction(InstructionType::CALCULATION);
+                        instruction->instruction_code = (int) op;
+                        output->push_back(instruction);
+                    } else if (InstructionNumber::isConst(op)) {
+                        Instruction *instruction = instruction = new Instruction(InstructionType::CONST);
+                        instruction->instruction_code = (int) op;
+                        Token parameter = tokens[++i]; // parameter MUST be next behind this
+                        instruction->parameter = parameter.uint32_value;
 
-					output->push_back( instruction );
-				}
-				else if ( InstructionNumber::hasParameter(op) ) {
-					Instruction *instruction = instruction = new Instruction( InstructionType::INSTRUCTION_WITH_PARAMETER );
-					instruction->instruction_code = (int) op;
-					Token parameter = tokens[++i]; // parameter MUST be next behind this
-					instruction->parameter = parameter.uint32_value;
+                        output->push_back(instruction);
+                    } else if (InstructionNumber::hasParameter(op)) {
+                        Instruction *instruction = instruction = new Instruction(
+                                InstructionType::INSTRUCTION_WITH_PARAMETER);
+                        instruction->instruction_code = (int) op;
+                        Token parameter = tokens[++i]; // parameter MUST be next behind this
+                        if (parameter.type == TokenType::VARIABLE) {
+                            instruction->parameter = currentFunction->locals[parameter.string_value].first;
+                        } else {
+                            instruction->parameter = parameter.uint32_value;
+                        }
 
-					output->push_back( instruction );
-				}
-				else if ( InstructionNumber::hasNoParameter(op) ) {
-					Instruction *instruction = instruction = new Instruction( InstructionType::INSTRUCTION_WITHOUT_PARAMETER );
-					instruction->instruction_code = (int) op;
-					output->push_back( instruction );
-				}
-				else {
-					std::cout << "Parser::ParseProper : unsupported operation found : " << (int) op << std::endl;
-				}
+                        output->push_back(instruction);
+                    } else if (InstructionNumber::hasNoParameter(op)) {
+                        Instruction *instruction = instruction = new Instruction(
+                                InstructionType::INSTRUCTION_WITHOUT_PARAMETER);
+                        instruction->instruction_code = (int) op;
+                        output->push_back(instruction);
+                    } else {
+                        std::cout << "Parser::ParseProper : unsupported operation found : " << op << std::endl;
+                    }
 
-			}
-			// KEYWORD is either an instruction or a type (e.g., i32.add or just i32)
-			else {
-				if ( HACK_inCodeBlock ) {
-					InstructionNumber::Type type = InstructionNumber::getType( token.string_value );
+                }
+                // KEYWORD is either an instruction or a type (e.g., i32.add or just i32)
+                else {
+                    if (HACK_inCodeBlock) {
+                        InstructionNumber::Type type = InstructionNumber::getType(token.string_value);
 
-					if ( type != InstructionNumber::Type::NONE ) {
-						// Types are always without parameter
-						Instruction *instruction = instruction = new Instruction( InstructionType::INSTRUCTION_WITHOUT_PARAMETER );
-						instruction->instruction_code = (int) type;
-						output->push_back( instruction );
-					}
-				}
-			}
-		}
-		else if ( token.type == TokenType::BRACKETS_OPEN || token.type == TokenType::BRACKETS_CLOSED ) {
+                        if (type != InstructionNumber::Type::NONE) {
+                            // Types are always without parameter
+                            Instruction *instruction = instruction = new Instruction(
+                                    InstructionType::INSTRUCTION_WITHOUT_PARAMETER);
+                            instruction->instruction_code = (int) type;
+                            output->push_back(instruction);
+                        }
+                    }
+                }
+                break;
+            }
+            case TokenType::VARIABLE: {
+                if (!currentFunction->locals.contains(tokens[i + 1].string_value)) {
+                    uint8_t type = 0;
+                    if (tokens[i + 2].string_value == "i32") type = constants::INT32;
+                    else if (tokens[i + 2].string_value == "i64") type = constants::INT64;
+                    else if (tokens[i + 2].string_value == "f32") type = constants::FLOAT32;
+                    else if (tokens[i + 2].string_value == "f64") type = constants::FLOAT64;
+                    currentFunction->locals.insert(
+                                            std::make_pair(tokens[i + 1].string_value,
+                                            std::make_pair(currentFunction->parameters.size() + currentFunction->locals.size(), type)));
+                }
+                i += 2;
+                break;
+            }
+            case TokenType::BRACKETS_OPEN:
+            case TokenType::BRACKETS_CLOSED:
 			// FIXME: TODO: properly support these, some of these should become END instructions!!!
-		}
-		else {
-			if ( !HACK_inCodeBlock ) {
-				continue;
-			}
-
-			std::cout << "Parser::ParseProper : unsupported TokenType found : " << (int) token.type << " for " << token.uint32_value << " OR " << token.string_value << std::endl;
+                break;
+            default: {
+                if (!HACK_inCodeBlock) {
+                    continue;
+                } else {
+                    std::cout << "Parser::ParseProper : unsupported TokenType found : " << (int) token.type << " for " << token.uint32_value << " OR " << token.string_value << std::endl;
+                }
+            }
 		}
 	}
     if (currentFunction != nullptr) {

@@ -16,11 +16,12 @@ int main()
 
     int err = lexer.lex();
 
+    auto tokens = lexer.getTokens();
+
     std::cout << "DONE LEXING " << std::endl;
 
     Parser parser = Parser(&lexer);
 
-    //ByteStream* compiledOutput = parser.parseSimple();
     std::vector<Instruction*> AST = parser.parseProper();
     auto functions = parser.getFunctions();
     

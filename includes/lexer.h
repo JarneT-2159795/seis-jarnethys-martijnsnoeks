@@ -10,8 +10,12 @@ class Lexer
 {
 private:
 	ByteStream *byteStream;
-
     std::vector<Token> tokens;
+    Token parseKeyword();
+    Token parseNumber();
+    Token parseString();
+    Token parseVarName();
+    void parseComment();
 
 public:
 	Lexer(std::string path);
@@ -22,11 +26,6 @@ public:
     ByteStream* getByteStream(){ return this->byteStream; }
     std::vector<Token> getTokens() { return this->tokens; }
 
-protected:
-    Token parseKeyword();
-    Token parseNumber();
-    Token parseString();
-    void parseComment();
 };
 
 #endif // __LEXER_H__

@@ -33,7 +33,7 @@ class Character {
 };
 
 // TODO: support more number types than just uint32_t
-enum class TokenType { BRACKETS_OPEN, BRACKETS_CLOSED, KEYWORD, STRING, NUMBER };
+enum class TokenType { BRACKETS_OPEN, BRACKETS_CLOSED, KEYWORD, STRING, NUMBER, VARIABLE };
 
 class Token {
 public:
