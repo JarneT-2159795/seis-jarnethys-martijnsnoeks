@@ -24,9 +24,11 @@ public:
 
     void addFromByteStream(ByteStream *stream);
     void readFile(std::string filepath);
+    void readCharVector(std::vector<uint8_t> vector);
     void readVector(std::vector<uint8_t> vector);
 
     void writeFile(std::string filepath);
+    uint8_t* getBuffer() { return buffer.data(); };
     
     uint8_t readByte();
     std::vector<uint8_t> readBytes(int amount);

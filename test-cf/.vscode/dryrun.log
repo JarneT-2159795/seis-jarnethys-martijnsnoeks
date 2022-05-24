@@ -1,0 +1,10 @@
+make --dry-run --keep-going --print-directory
+make: Entering directory '/home/jarne/seis/seis-jarnethys-martijnsnoeks/test-cf'
+wat2wasm --enable-multi-value code.wat
+rm build_test/ -rf
+mkdir build_test
+cp code.wasm build_test/code.wasm
+cd build_test && em++ ../main.cpp ../../includes/*.cpp -sEXPORTED_FUNCTIONS=_useModule -std=c++2a -s WASM=1 -o test.html
+emrun --no_browser --port 8080 build_test/test.html
+make: Leaving directory '/home/jarne/seis/seis-jarnethys-martijnsnoeks/test-cf'
+ 

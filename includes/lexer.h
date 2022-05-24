@@ -19,6 +19,7 @@ private:
 
 public:
 	Lexer(std::string path);
+    Lexer(std::vector<uint8_t> stream);
     ~Lexer();
     
     int lex();
