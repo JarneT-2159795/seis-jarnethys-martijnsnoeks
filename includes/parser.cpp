@@ -26,7 +26,7 @@ std::vector<Instruction*> Parser::parseProper() {
 	bool HACK_inCodeBlock = false;
 
 	for ( int i = 0; i < tokens.size(); ++i ) {
-        std::cout << "Token " << i << ": " << tokens[i].string_value << std::endl;
+        //std::cout << "Token " << i << ": " << tokens[i].string_value << std::endl;
 		
 		Token token = tokens[i];
         if (token.string_value == "func") {
@@ -64,6 +64,9 @@ std::vector<Instruction*> Parser::parseProper() {
                         break;
                     case InstructionNumber::Type::F64:
                         currentFunction->parameters.push_back(VariableType::isfloat64_t);
+                        break;
+                    default:
+                        std::cout << "Unknown parameter type: " << tokens[i].string_value << std::endl;
                         break;
                 }
                 i++;
