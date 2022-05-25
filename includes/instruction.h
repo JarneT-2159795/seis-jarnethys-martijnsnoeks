@@ -81,6 +81,7 @@ public:
         for (uint8_t noParamOP : noParamOPs) {
             if ( noParamOP == op ) return true;
         }
+        return false;
     }
 };
 
