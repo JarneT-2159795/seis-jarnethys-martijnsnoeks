@@ -4,7 +4,7 @@
 @import "{{ site.theme }}";
 
 header * {
-  min-width: 100%;
+  min-width: 96%;
 }
 
 footer * {
@@ -12,5 +12,9 @@ footer * {
 }
 
 main * {
-  min-width: 80%;
+  min-width: 70%;
+}
+
+code {
+  white-space : pre-wrap !important;
 }
