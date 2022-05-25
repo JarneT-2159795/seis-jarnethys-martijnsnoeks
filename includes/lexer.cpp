@@ -127,19 +127,20 @@ void Lexer::parseComment()
     // two types of comments
     // either it's a full line: starts with ;; and ends on \n
     // OR it's between two brackets and semicolons (;  ;)
-	
-    if (byteStream->readByte() == ';') {
-        // full line comment
-        while (byteStream->peekByte() != '\n') {
-            byteStream->seek(1);
-        }
-    } else {
+
+    byteStream->seek(-1);
+    if (byteStream->readByte() == '(') {
         // bracket comment
         bool foundEnd = false;
         while (!foundEnd) {
             if (byteStream->readByte() == ';' && byteStream->peekByte() == ')') {
                 foundEnd = true;
             }
+        }
+    } else {
+        // full line comment
+        while (byteStream->peekByte() != '\n') {
+            byteStream->seek(1);
         }
     }
 }
