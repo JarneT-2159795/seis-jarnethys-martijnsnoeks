@@ -346,6 +346,7 @@ We can use the build output to see how each section is represented in the final 
 This section stores information about function types. These function types indicate which parameters the function expects and which result types the function generates. As you can see below the type section is relatively simple to decode. The section code 0x1 is followed by the size of the section in bytes (this is standard for every section) and the amount of function types in the file. When decoding the file we have to be careful as multiple function with the same function type will only be written once. This means that the number of function types doesn't always equal the number of functions.
 
 After all of this there will be a sequence of function types. Each type can be recognized by the 0x60 byte in front. This byte is followed by a byte indicating the number of parameters and a byte per parameter indicting the type. Possible parameter types are shown in the table below. Next a byte indicates the number of result types followed by a byte for every result type just like the parameter bytes earlier.
+
 |Byte|Type|
 |----|----|
 |0x7F|i32|
