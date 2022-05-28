@@ -89,6 +89,8 @@ std::vector<Instruction*> Parser::parseProper() {
                     case InstructionNumber::Type::F64:
                         currentFunction->results.push_back(VariableType::isfloat64_t);
                         break;
+                    default:
+                        std::cout << "Unknown result type: " << tokens[i].string_value << std::endl;
                 }
                 i++;
             }

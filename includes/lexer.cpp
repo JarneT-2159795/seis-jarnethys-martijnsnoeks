@@ -74,7 +74,6 @@ int Lexer::lex()
         }
 
         // TODO: support:
-        // - $variable syntax
         // - extra parameters with = (e.g., seek=XYZ for memory ops)
         // - hexadecimal numbers (e.g., 0x12) https://webassembly.github.io/spec/core/text/values.html#integers
         // - floating point numbers https://webassembly.github.io/spec/core/text/values.html#floating-point
