@@ -45,7 +45,13 @@ const uint8_t GLOBALSET = 0x24;
 
 // Memory instructions
 const uint8_t I32LOAD = 0x28;
+const uint8_t I64LOAD = 0x29;
+const uint8_t F32LOAD = 0x2A;
+const uint8_t F64LOAD = 0x2B;
 const uint8_t I32STORE = 0x36;
+const uint8_t I64STORE = 0x37;
+const uint8_t F32STORE = 0x38;
+const uint8_t F64STORE = 0x39;
 
 // Numeric instructions
 const uint8_t I32CONST = 0x41;

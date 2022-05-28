@@ -222,12 +222,18 @@ void Function::performOperation(uint8_t byte, std::vector<int> &jumpStack, std::
             globals->at(bs.readUInt32()).setVariable(stack->pop());
             break;
         case I32LOAD:
+        case I64LOAD:
+        case F32LOAD:
+        case F64LOAD:
             {
                 auto index = stack->pop<int32_t>();
                 stack->push((*memories)[0].getMemory(index));
                 break;
             }
         case I32STORE:
+        case I64STORE:
+        case F32STORE:
+        case F64STORE:
             {
                 auto var = stack->pop();
                 auto index = stack->pop<int32_t>();
