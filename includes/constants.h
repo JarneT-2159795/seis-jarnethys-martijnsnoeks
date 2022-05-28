@@ -26,6 +26,7 @@ const uint8_t FLOAT64 = 0x7C;
 
 // Control instructions
 const uint8_t BLOCK = 0x2;
+const uint8_t LOOP = 0x3;
 const uint8_t IF = 0x4;
 const uint8_t ELSE = 0x5;
 const uint8_t CALL = 0x10;

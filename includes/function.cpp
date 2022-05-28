@@ -27,7 +27,6 @@ void Function::setBody(std::vector<uint8_t> functionBody) {
 }
 
 void Function::findJumps() {
-    enum class TYPE { IF, BLOCK };
     auto origStack = stack;
     auto origGlobals = globals;
     auto origMemories = memories;
@@ -42,8 +41,9 @@ void Function::findJumps() {
 
     std::vector<std::array<int, 2>> openIfJumps;
     std::vector<int> openBlockJumps;
-    std::vector<TYPE> last;
-    std::array<int, 6> forbidden = { BR, BR_IF, BLOCK, IF, ELSE, CALL };
+    std::vector<int> openLoopJumps;
+    std::vector<blockType> last;
+    std::array<int, 7> forbidden = { BR, BR_IF, BLOCK, IF, ELSE, CALL, LOOP };
     std::vector<int> dummy;
     while (!bs.atEnd() && bs.getRemainingByteCount() > 1) {
         byte = bs.readByte();
@@ -51,7 +51,13 @@ void Function::findJumps() {
             case BLOCK:
                 {
                     openBlockJumps.push_back(bs.getCurrentByteIndex());
-                    last.push_back(TYPE::BLOCK);
+                    last.push_back(blockType::BLOCK);
+                    break;
+                }
+            case LOOP:
+                {
+                    openLoopJumps.push_back(bs.getCurrentByteIndex());
+                    last.push_back(blockType::LOOP);
                     break;
                 }
             case IF:
@@ -60,7 +66,7 @@ void Function::findJumps() {
                     std::array<int, 2> a;
                     a[0] = bs.getCurrentByteIndex();
                     openIfJumps.push_back(a);
-                    last.push_back(TYPE::IF);
+                    last.push_back(blockType::IF);
                     break;
                 }
             case ELSE:
@@ -71,15 +77,18 @@ void Function::findJumps() {
                 }
             case BLOCK_END:
                 {
-                    if (last.back() == TYPE::IF) {
+                    if (last.back() == blockType::IF) {
                         std::array<int, 2> a;
                         a[0] = openIfJumps.back()[1];
                         a[1] = bs.getCurrentByteIndex() - 1;
                         ifJumps.insert(std::make_pair(openIfJumps.back()[0], a));
                         openIfJumps.pop_back();
-                    } else if (last.back() == TYPE::BLOCK) {
+                    } else if (last.back() == blockType::BLOCK) {
                         blockJumps[openBlockJumps.back()] = bs.getCurrentByteIndex() - 1;
                         openBlockJumps.pop_back();
+                    } else if (last.back() == blockType::LOOP) {
+                        loopJumps[bs.getCurrentByteIndex() - 1] = openLoopJumps.back();
+                        openLoopJumps.pop_back();
                     }
                     last.pop_back();
                     break;
@@ -140,6 +149,14 @@ void Function::performOperation(uint8_t byte, std::vector<int> &jumpStack, std::
             {
                 jumpStack.push_back(bs.getCurrentByteIndex());
                 bs.seek(1);
+                lastBlock.push(blockType::BLOCK);
+                break;
+            }
+        case LOOP:
+            {
+                jumpStack.push_back(bs.getCurrentByteIndex());
+                bs.seek(1);
+                lastBlock.push(blockType::LOOP);
                 break;
             }
         case IF:
@@ -177,15 +194,28 @@ void Function::performOperation(uint8_t byte, std::vector<int> &jumpStack, std::
             }
         case BR_IF:
             {
-                if (stack->pop<int32_t>()) {
-                    int depth = bs.readUInt32();
-                    bs.setByteIndex(blockJumps[jumpStack[jumpStack.size() - 1 - depth]]);
-                    for (int i = 0; i < depth + 1; ++i) {
-                        jumpStack.pop_back();
+                if (lastBlock.top() == blockType::BLOCK) {
+                    if (stack->pop<int32_t>()) {
+                        int depth = bs.readUInt32();
+                        bs.setByteIndex(blockJumps[jumpStack[jumpStack.size() - 1 - depth]]);
+                        for (int i = 0; i < depth + 1; ++i) {
+                            jumpStack.pop_back();
+                        }
+                    } else {
+                        bs.seek(1); // Break depth
                     }
-                } else {
-                    bs.seek(1); // Break depth
+                } else if (lastBlock.top() == blockType::LOOP) {
+                    if (stack->pop<int32_t>()) {
+                        int depth = bs.readUInt32();
+                        bs.setByteIndex(loopJumps[bs.getCurrentByteIndex() + 1]);
+                        for (int i = 0; i < depth + 1; ++i) {
+                            jumpStack.pop_back();
+                        }
+                    } else {
+                        bs.seek(1); // Break depth
+                    }
                 }
+                lastBlock.pop();
                 break;
             }
         case DROP:

@@ -8,6 +8,7 @@
 #include "stack.h"
 #include "variabletype.h"
 #include "Memory.h"
+#include <stack>
 
 struct FunctionException : public std::exception{
     std::string s;
@@ -26,6 +27,12 @@ public:
 
 private:
     Variable value;
+};
+
+enum class blockType {
+    BLOCK,
+    LOOP,
+    IF,
 };
 
 class Function {
@@ -48,6 +55,8 @@ private:
     std::vector<uint8_t> body;
     std::unordered_map<int, std::array<int, 2>> ifJumps;
     std::unordered_map<int, int> blockJumps;
+    std::unordered_map<int, int> loopJumps;
+    std::stack<blockType> lastBlock;
     int stackOffset = 0;
     Stack *stack;
     std::vector<Function> *functions;
