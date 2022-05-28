@@ -1,8 +1,6 @@
 #include <vector>
 #include <variant>
-#define float32_t float
-#define float64_t double
-typedef std::variant<int32_t, int64_t, float32_t, float64_t> Variable;
+#include "Variable.h"
 
 class Stack {
 

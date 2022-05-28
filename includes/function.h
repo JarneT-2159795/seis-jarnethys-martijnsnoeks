@@ -7,6 +7,7 @@
 #include "constants.h"
 #include "stack.h"
 #include "variabletype.h"
+#include "Memory.h"
 
 struct FunctionException : public std::exception{
     std::string s;
@@ -25,30 +26,6 @@ public:
 
 private:
     Variable value;
-};
-
-class Memory {
-public:
-    Memory(uint32_t init_size) : initial(init_size), maximum(0) {};
-    Memory(uint32_t init_size, uint32_t max_size) : initial(init_size), maximum(max_size) {};
-    void setMemory(int index, Variable var) { memory[index] = var; }
-    Variable getMemory(int index) { return memory[index]; }
-    void setName(std::string name) { this->name = name; }
-    void fill(uint32_t offset, int32_t value, uint32_t length) {
-        if (memory.size() < offset + length) {
-            memory.resize(offset + length);
-        }
-        for (uint32_t i = offset; i < offset + length; i++) {
-            memory.emplace(memory.begin() + i, value);
-        }
-    }
-    std::vector<Variable>* data() { return &memory; }
-
-private:
-    std::string name;
-    uint32_t initial;
-    uint32_t maximum;
-    std::vector<Variable> memory;
 };
 
 class Function {
