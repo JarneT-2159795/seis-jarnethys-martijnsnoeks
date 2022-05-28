@@ -53,16 +53,21 @@ private:
     std::vector<VariableType> localVars;
     std::vector<VariableType> results;
     std::vector<uint8_t> body;
+
     std::unordered_map<int, std::array<int, 2>> ifJumps;
     std::unordered_map<int, int> blockJumps;
     std::unordered_map<int, int> loopJumps;
     std::stack<blockType> lastBlock;
+
+    std::vector<std::vector<Variable>> loopStarts;
+
     int stackOffset = 0;
     Stack *stack;
     std::vector<Function> *functions;
     std::vector<GlobalVariable> *globals;
     std::vector<Memory> *memories;
     ByteStream bs;
+
     void performOperation(uint8_t byte, std::vector<int> &jumpStack, std::vector<int> &ifStack);
     bool jumpsCalculated = false;
     void findJumps();

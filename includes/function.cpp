@@ -154,6 +154,7 @@ void Function::performOperation(uint8_t byte, std::vector<int> &jumpStack, std::
             }
         case LOOP:
             {
+                loopStarts.push_back(stack->data());
                 jumpStack.push_back(bs.getCurrentByteIndex());
                 bs.seek(1);
                 lastBlock.push(blockType::LOOP);
@@ -206,15 +207,21 @@ void Function::performOperation(uint8_t byte, std::vector<int> &jumpStack, std::
                     }
                 } else if (lastBlock.top() == blockType::LOOP) {
                     if (stack->pop<int32_t>()) {
-                        int depth = bs.readUInt32();
-                        bs.setByteIndex(loopJumps[bs.getCurrentByteIndex() + 1]);
-                        for (int i = 0; i < depth + 1; ++i) {
-                            jumpStack.pop_back();
+                        if (stack->data() == loopStarts.back()) {
+                            std::cout << "Endless loop: stopping loop" << std::endl;
+                            bs.seek(1); // Break depth
+                        } else {
+                            int depth = bs.readUInt32();
+                            bs.setByteIndex(loopJumps[bs.getCurrentByteIndex() + 1]);
+                            for (int i = 0; i < depth + 1; ++i) {
+                                jumpStack.pop_back();
+                            }
                         }
                     } else {
                         bs.seek(1); // Break depth
                     }
                 }
+                loopStarts.pop_back();
                 lastBlock.pop();
                 break;
             }
