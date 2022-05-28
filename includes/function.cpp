@@ -133,6 +133,7 @@ void Function::operator()(int offset) {
     
     std::vector<int> jumpStack;
     std::vector<int> ifStack;
+    functionStart = stack->data();
     bs.readVector(body);
     uint8_t byte;
     while (!bs.atEnd()) {
@@ -181,7 +182,11 @@ void Function::performOperation(uint8_t byte, std::vector<int> &jumpStack, std::
                 Function *func = &(*functions)[funcIndex];
                 Function f = Function(func->params, func->results, func->stack, func->functions, func->globals, func->memories);
                 f.setBody(func->body);
-                f(stack->size() - functions->at(funcIndex).getParams().size());
+                if (stack->data() == functionStart && func->name == this->name) {
+                    std::cout << "Recursive function is endless\nStopping execution" << std::endl;
+                } else {
+                    f(stack->size() - functions->at(funcIndex).getParams().size());
+                }
                 break;
             }
         case BR:
@@ -212,7 +217,7 @@ void Function::performOperation(uint8_t byte, std::vector<int> &jumpStack, std::
                             bs.seek(1); // Break depth
                         } else {
                             int depth = bs.readUInt32();
-                            bs.setByteIndex(loopJumps[bs.getCurrentByteIndex() + 1]);
+                            bs.setByteIndex(loopJumps[bs.getCurrentByteIndex()] - 1);
                             for (int i = 0; i < depth + 1; ++i) {
                                 jumpStack.pop_back();
                             }

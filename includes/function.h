@@ -60,6 +60,7 @@ private:
     std::stack<blockType> lastBlock;
 
     std::vector<std::vector<Variable>> loopStarts;
+    std::vector<Variable> functionStart;
 
     int stackOffset = 0;
     Stack *stack;
