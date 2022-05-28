@@ -16,7 +16,9 @@ int main()
 
     int err = lexer.lex();
 
-    auto tokens = lexer.getTokens();
+    if (err != 0) {
+        std::cout << "Lexer error: " << err << std::endl;
+    }
 
     std::cout << "DONE LEXING " << std::endl;
 
@@ -27,9 +29,9 @@ int main()
     
     std::cout << "DONE PARSING " << std::endl;
 
-    //Compiler compiler = Compiler(AST);
     Compiler compiler = Compiler(functions);
-    auto compiledOutput = compiler.compile();
+    compiler.compile();
+    compiler.writeFile("output.wasm");
 
     std::cout << "DONE COMPILING " << std::endl;
 }
