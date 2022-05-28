@@ -221,6 +221,20 @@ void Function::performOperation(uint8_t byte, std::vector<int> &jumpStack, std::
         case GLOBALSET:
             globals->at(bs.readUInt32()).setVariable(stack->pop());
             break;
+        case I32LOAD:
+            {
+                auto index = stack->pop<int32_t>();
+                stack->push((*memories)[0].getMemory(index));
+                break;
+            }
+        case I32STORE:
+            {
+                auto var = stack->pop();
+                auto index = stack->pop<int32_t>();
+                (*memories)[0].setMemory(index, var);
+                bs.seek(2); // TODO alignment and index
+                break;
+            }
         case I32CONST:
             stack->push(int32_t(bs.readInt32()));
             break;
