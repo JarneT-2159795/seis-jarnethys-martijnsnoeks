@@ -24,4 +24,5 @@ public:
     Variable back();
     void printAll();
     void removeRange(int start, int end);
+    std::vector<Variable> data() { return vector; }
 };
