@@ -28,5 +28,5 @@ add_executable(seis_jarnethys_martijnsnoeks
         includes/Memory.cpp
         includes/Memory.h
         includes/Variable.h
-        test-module/main.cpp
+        test-compiler/main.cpp
 )
