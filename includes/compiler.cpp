@@ -9,7 +9,7 @@
 #include "constants.h"
 
 ByteStream* Compiler::compileBody(AST_Function* function) {
-    auto body = *(function->body);
+    auto body = foldConstants(*(function->body));
     fullOutput->writeByte(0);
     int bodyFixup = fullOutput->getCurrentByteIndex();
 
@@ -22,8 +22,51 @@ ByteStream* Compiler::compileBody(AST_Function* function) {
     for ( auto instruction : body ) {
         fullOutput->writeByte( instruction->instruction_code );
 
-        if ( instruction->type == InstructionType::CONST || instruction->type == InstructionType::INSTRUCTION_WITH_PARAMETER ) {
+        if ( instruction->type == InstructionType::INSTRUCTION_WITH_PARAMETER ) {
             fullOutput->writeUInt32( instruction->parameter );
+        } else if ( instruction->type == InstructionType::CONST ) {
+            switch (instruction->instruction_code) {
+                case constants::I32CONST:
+                    {
+                        int32_t num = instruction->parameter;
+                        if (num == 0) {
+                            fullOutput->writeByte(0);
+                        } else {
+                            bool more = true;
+                            while (more) {
+                                uint8_t byte = num & 0b0111'1111;
+                                num >>= 7;
+                                if ((num == 0 && (byte & 0b0100'0000) == 0) || (num == -1 && (byte & 0b0100'0000) != 0)) {
+                                    more = false;
+                                } else {
+                                    byte |= 0b1000'0000;
+                                }
+                                fullOutput->writeByte(byte);
+                            }
+                        }
+                        break;
+                    }
+                case constants::I64CONST:
+                    {
+                        int64_t num = instruction->parameter;
+                        if (num == 0) {
+                            fullOutput->writeByte(0);
+                        } else {
+                            bool more = true;
+                            while (more) {
+                                uint8_t byte = num & 0b0111'1111;
+                                num >>= 7;
+                                if ((num == 0 && (byte & 0b0100'0000) == 0) || (num == -1 && (byte & 0b0100'0000) != 0)) {
+                                    more = false;
+                                } else {
+                                    byte |= 0b1000'0000;
+                                }
+                                fullOutput->writeByte(byte);
+                            }
+                        }
+                        break;
+                    }
+            }
         }
     }
     fullOutput->fixUpByte(bodyFixup - 1, fullOutput->getCurrentByteIndex() - bodyFixup);
