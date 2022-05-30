@@ -289,7 +289,9 @@ void Function::performOperation(uint8_t byte, std::vector<int> &jumpStack, std::
         case F64LOAD:
             {
                 auto index = stack->pop<int32_t>();
-                stack->push((*memories)[0].getMemory(index));
+                bs.seek(1); // alignment
+                uint32_t offset = bs.readUInt32();
+                stack->push((*memories)[0].getMemory(index + (int)offset));
                 break;
             }
         case I32STORE:
@@ -299,8 +301,19 @@ void Function::performOperation(uint8_t byte, std::vector<int> &jumpStack, std::
             {
                 auto var = stack->pop();
                 auto index = stack->pop<int32_t>();
-                (*memories)[0].setMemory(index, var);
-                bs.seek(2); // TODO alignment and index
+                bs.seek(1); // alignment
+                uint32_t offset = bs.readUInt32();
+                (*memories)[0].setMemory(index + (int)offset, var);
+                break;
+            }
+        case MEMORYSIZE:
+            stack->push(Variable(int32_t((int32_t)memories->at(bs.readUInt32()).data()->capacity())));
+            break;
+        case MEMORYGROW:
+            {
+                uint32_t index = bs.readUInt32();
+                stack->push(Variable((int32_t)memories->at(index).data()->capacity()));
+                memories->at(index).data()->reserve(memories->at(index).data()->capacity() + stack->pop<int32_t>());
                 break;
             }
         case I32CONST:

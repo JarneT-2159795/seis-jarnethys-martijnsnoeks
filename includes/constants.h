@@ -53,6 +53,8 @@ const uint8_t I32STORE = 0x36;
 const uint8_t I64STORE = 0x37;
 const uint8_t F32STORE = 0x38;
 const uint8_t F64STORE = 0x39;
+const uint8_t MEMORYSIZE = 0x3F;
+const uint8_t MEMORYGROW = 0x40;
 
 // Numeric instructions
 const uint8_t I32CONST = 0x41;
