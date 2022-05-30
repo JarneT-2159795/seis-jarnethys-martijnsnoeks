@@ -39,6 +39,7 @@ class Token {
 public:
     Token(TokenType type, std::string string_value) : type( type ), string_value( string_value ) {}
     Token(TokenType type, uint32_t uint32_value) : type( type ), uint32_value( uint32_value ) {}
+    Token(TokenType type, double double_value) : type( type ), double_value( double_value ) {}
 
     ~Token(){};
 
@@ -53,4 +54,5 @@ public:
 
     std::string string_value;
     uint32_t uint32_value;
+    double double_value;
 };

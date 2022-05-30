@@ -112,7 +112,11 @@ std::vector<Instruction*> Parser::parseProper() {
                         Instruction *instruction = instruction = new Instruction(InstructionType::CONST);
                         instruction->instruction_code = (int) op;
                         Token parameter = tokens[++i]; // parameter MUST be next behind this
-                        instruction->parameter = parameter.uint32_value;
+                        if (op == constants::I32CONST) {
+                            instruction->parameter = parameter.uint32_value;
+                        } else if (op == constants::F32CONST) {
+                            instruction->float_parameter = parameter.double_value;
+                        }
 
                         output->push_back(instruction);
                     } else if (InstructionNumber::hasParameter(op)) {

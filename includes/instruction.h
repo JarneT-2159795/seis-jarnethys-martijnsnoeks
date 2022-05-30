@@ -114,5 +114,6 @@ public:
 
     uint32_t instruction_code = (uint32_t) 0;
     uint32_t parameter = 0;
+    float32_t float_parameter = 0.0;
 };
 #endif // __INSTRUCTION_H__

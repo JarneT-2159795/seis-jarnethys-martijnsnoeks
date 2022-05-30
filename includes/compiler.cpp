@@ -46,25 +46,13 @@ ByteStream* Compiler::compileBody(AST_Function* function) {
                         }
                         break;
                     }
-                case constants::I64CONST:
+                case constants::F32CONST:
                     {
-                        int64_t num = instruction->parameter;
-                        if (num == 0) {
-                            fullOutput->writeByte(0);
-                        } else {
-                            bool more = true;
-                            while (more) {
-                                uint8_t byte = num & 0b0111'1111;
-                                num >>= 7;
-                                if ((num == 0 && (byte & 0b0100'0000) == 0) || (num == -1 && (byte & 0b0100'0000) != 0)) {
-                                    more = false;
-                                } else {
-                                    byte |= 0b1000'0000;
-                                }
-                                fullOutput->writeByte(byte);
-                            }
+                        uint32_t num = reinterpret_cast<uint32_t&>(instruction->float_parameter);
+                        for (int i = 0; i < 4; ++i) {
+                            fullOutput->writeByte(num & 0xFF);
+                            num >>= 8;
                         }
-                        break;
                     }
             }
         }
@@ -145,13 +133,19 @@ std::vector<Instruction*> Compiler::foldConstants(std::vector<Instruction*> inpu
 					folded->instruction_code = (int) instruction->instruction_code; // is i32.const!
 
                     // TODO: support other things besides i32.add!!!
-                    if ( nextnext->instruction_code == (int) constants::I32ADD ) {
+                    if ( nextnext->instruction_code == constants::I32ADD ) {
 					    folded->parameter = instruction->parameter + next->parameter;
                         
                         std::cout << "Compiler::foldConstants : Folded " << instruction->parameter << " + " << next->parameter << " to " << folded->parameter << std::endl;
+                    } else if(nextnext->instruction_code == constants::I32SUB) {
+                        folded->parameter = instruction->parameter - next->parameter;
+                        std::cout << "Compiler::foldConstants : Folded " << instruction->parameter << " - " << next->parameter << " to " << folded->parameter << std::endl;
+                    } else if (nextnext->instruction_code == constants::I32MUL) {
+                        folded->parameter = instruction->parameter * next->parameter;
+                        std::cout << "Compiler::foldConstants : Folded " << instruction->parameter << " * " << next->parameter << " to " << folded->parameter << std::endl;
                     }
                     else {
-                        std::cout << "Compiler::foldConstants : can't fold for other stuff than i32.add yet! " << nextnext->instruction_code << std::endl;
+                        std::cout << "Compiler::foldConstants : can't fold " << nextnext->instruction_code << std::endl;
                     }
 
 					output.push_back( folded );
