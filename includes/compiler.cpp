@@ -143,6 +143,15 @@ std::vector<Instruction*> Compiler::foldConstants(std::vector<Instruction*> inpu
                     } else if (nextnext->instruction_code == constants::I32MUL) {
                         folded->parameter = instruction->parameter * next->parameter;
                         std::cout << "Compiler::foldConstants : Folded " << instruction->parameter << " * " << next->parameter << " to " << folded->parameter << std::endl;
+                    } else if(nextnext->instruction_code == constants::F32ADD) {
+                        folded->float_parameter = instruction->float_parameter + next->float_parameter;
+                        std::cout << "Compiler::foldConstants : Folded " << instruction->float_parameter << " + " << next->float_parameter << " to " << folded->float_parameter << std::endl;
+                    } else if(nextnext->instruction_code == constants::F32SUB) {
+                        folded->float_parameter = instruction->float_parameter - next->float_parameter;
+                        std::cout << "Compiler::foldConstants : Folded " << instruction->float_parameter << " - " << next->float_parameter << " to " << folded->float_parameter << std::endl;
+                    } else if(nextnext->instruction_code == constants::F32MUL) {
+                        folded->float_parameter = instruction->float_parameter * next->float_parameter;
+                        std::cout << "Compiler::foldConstants : Folded " << instruction->float_parameter << " * " << next->float_parameter << " to " << folded->float_parameter << std::endl;
                     }
                     else {
                         std::cout << "Compiler::foldConstants : can't fold " << nextnext->instruction_code << std::endl;
