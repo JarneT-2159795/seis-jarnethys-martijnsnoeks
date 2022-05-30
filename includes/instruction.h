@@ -24,9 +24,20 @@ public:
         if ( name == "i32.const" ) return constants::I32CONST;
         if ( name == "i32.eq" ) return constants::I32EQ;
 
+        if ( name == "i64.add" ) return constants::I64ADD;
+        if ( name == "i64.sub" ) return constants::I64SUB;
+        if ( name == "i64.mul" ) return constants::I64MUL;
+        if ( name == "i64.const" ) return constants::I64CONST;
+
         if (name == "f32.add") return constants::F32ADD;
         if (name == "f32.sub") return constants::F32SUB;
         if (name == "f32.mul") return constants::F32MUL;
+        if (name == "f32.const") return constants::F32CONST;
+
+        if (name == "f64.add") return constants::F64ADD;
+        if (name == "f64.sub") return constants::F64SUB;
+        if (name == "f64.mul") return constants::F64MUL;
+        if (name == "f64.const") return constants::F64CONST;
 
         if ( name == "if" ) return constants::IF;
         if ( name == "else" ) return constants::ELSE;
