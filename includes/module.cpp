@@ -261,6 +261,15 @@ void Module::readCodeSection(int length) {
     }
 }
 
-void Module::readDataSection(int length) { std::cout << "data section" << std::endl; }
+void Module::readDataSection(int length) {
+    int numSgements = bytestr.readUInt32();
+    for (int i = 0; i < numSgements; ++i) {
+        bytestr.seek(4); // flags and index is always zero according to current specification
+        int segmentSize = bytestr.readUInt32();
+        for (int j = 0; j < segmentSize; ++j) {
+            memories[0].setMemory(j, Variable(int32_t(bytestr.readUInt32())));
+        }
+    }
+}
 
-void Module::readDataCountSection(int length) { std::cout << "datacount section" << std::endl; }
+void Module::readDataCountSection(int length) { bytestr.seek(1); /* data count */ }
