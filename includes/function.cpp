@@ -592,6 +592,9 @@ void Function::performOperation(uint8_t byte, std::vector<int> &jumpStack, std::
                             (*memories)[index].fill(offset, value, length);
                             break;
                         }
+                    default:
+                        std::cout << "Unknown memory bulk operation: " << operation << std::endl;
+                        break;
                 }
             }
         case BLOCK_END:
