@@ -180,6 +180,26 @@ void Function::performOperation(uint8_t byte, std::vector<int> &jumpStack, std::
             {
                 uint32_t funcIndex = bs.readUInt32();
                 Function *func = &(*functions)[funcIndex];
+                if (func->name == "log") {
+                    auto var = stack->pop();
+                    switch (var.index()) {
+                        case 0:
+                            std::cout << "i32 log from wasm: " << std::get<int32_t>(var) << std::endl;
+                            break;
+                        case 1:
+                            std::cout << "i64 log from wasm: " << std::get<int64_t>(var) << std::endl;
+                            break;
+                        case 2:
+                            std::cout << "f32 log from wasm: " << std::get<float32_t>(var) << std::endl;
+                            break;
+                        case 3:
+                            std::cout << "f64 log from wasm: " << std::get<float64_t>(var) << std::endl;
+                            break;
+                        default:
+                            break;
+                    }
+                    return;
+                }
                 Function f = Function(func->params, func->results, func->stack, func->functions, func->globals, func->memories);
                 f.setBody(func->body);
                 if (stack->data() == functionStart && func->name == this->name) {

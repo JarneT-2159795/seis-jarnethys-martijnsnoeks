@@ -160,7 +160,17 @@ void Module::readTypeSection(int length) {
     bytestr.seek(-1);
 }
 
-void Module::readImportSection(int length) { std::cout << "import section" << std::endl; }
+void Module::readImportSection(int length) {
+    uint32_t numImports = bytestr.readUInt32();
+    for (int i = 0; i < numImports; ++i) {
+        uint32_t stringLength = bytestr.readUInt32();
+        std::string moduleName = bytestr.readASCIIString(stringLength);
+        stringLength = bytestr.readUInt32();
+        std::string fieldName = bytestr.readASCIIString(stringLength);
+        functions.emplace_back(fieldName);
+        bytestr.seek(2); // skip kind and signature
+    }
+}
 
 void Module::readFunctionSection(int length) {
     int numFunctions = bytestr.readByte();
@@ -237,16 +247,17 @@ void Module::readElementSection(int length) { std::cout << "element section" << 
 
 void Module::readCodeSection(int length) {
     int numFunctions = bytestr.readByte();
+    auto otherFuncs = functions.size() - numFunctions;
     for (int i = 0; i < numFunctions; ++i) {
         int bodySize = bytestr.readByte() - 1;  // -1 for localVarType
         int localVarTypes = bytestr.readByte();
         for (int j = 0; j < localVarTypes; ++j) {
             int typeCount = bytestr.readByte();
-            functions[i].addLocalVars(getVarType(bytestr.readByte()), typeCount);
+            functions[i + otherFuncs].addLocalVars(getVarType(bytestr.readByte()), typeCount);
             bodySize -= 2;  // -2 for every local variable
         }
 
-        functions[i].setBody(bytestr.readBytes(bodySize));
+        functions[i + otherFuncs].setBody(bytestr.readBytes(bodySize));
     }
 }
 

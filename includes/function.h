@@ -37,6 +37,7 @@ enum class blockType {
 
 class Function {
 public:
+    Function(std::string name) : name(name) {}
     Function(std::vector<VariableType> paramaterList, std::vector<VariableType> resultList, Stack *moduleStack,
              std::vector<Function> *moduleFunctions, std::vector<GlobalVariable> *moduleGlobals, std::vector<Memory> *moduleMemories);
     void setName(std::string functionName);
