@@ -4,7 +4,6 @@
 #include <iomanip> // std::setw(), std::setfill()
 #include <vector>
 #include <string>
-
 #include "compiler.h"
 #include "constants.h"
 
@@ -204,6 +203,24 @@ ByteStream *Compiler::compile() {
         }
     }
 
+    // memory section
+    fullOutput->writeByte(0x05);
+    fullOutput->writeByte(0);
+    fixUpByte = fullOutput->getCurrentByteIndex();
+    fullOutput->writeByte(memories.size());
+    for (auto memory : memories) {
+        if (memory->max_value > 0) {
+            fullOutput->writeByte(1); // limits flag for 2 limits
+        } else {
+            fullOutput->writeByte(0); // no upper limit
+        }
+        fullOutput->writeByte(memory->initial_value);
+        if (memory->max_value > 0) {
+            fullOutput->writeByte(memory->max_value);
+        }
+    }
+    fullOutput->fixUpByte(fixUpByte - 1, fullOutput->getCurrentByteIndex() - fixUpByte);
+
     // export section
     fullOutput->writeByte(0x07);
     fullOutput->writeByte(0);
@@ -283,13 +300,30 @@ void Compiler::writeTypeSection() {
 }
 
 void Compiler::writeExportSection() {
-    fullOutput->writeByte(functions.size());
+    int memCount = 0;
+    for (auto memory : memories) {
+        if (memory->name.length() > 0) {
+            memCount++;
+        }
+    }
+    fullOutput->writeByte(functions.size() + memCount);
+    for (int i = 0; i < memories.size(); i++) {
+        if (memories[i]->name.length() == 0) {
+            continue;
+        }
+        fullOutput->writeByte(memories[i]->name.length());
+        for (auto c : memories[i]->name) {
+            fullOutput->writeByte(c);
+        }
+        fullOutput->writeByte(2); // type = memory
+        fullOutput->writeByte(i); // index
+    }
     for (int i = 0; i < functions.size(); i++) {
         fullOutput->writeByte(functions[i]->name.size());
         for (auto c : functions[i]->name) {
             fullOutput->writeByte(c);
         }
-        fullOutput->writeByte(0); // TODO add different exports
-        fullOutput->writeByte(i);
+        fullOutput->writeByte(0); // type = function
+        fullOutput->writeByte(i); // index
     }
 }

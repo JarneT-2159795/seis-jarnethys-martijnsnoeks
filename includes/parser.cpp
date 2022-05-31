@@ -27,8 +27,27 @@ std::vector<Instruction*> Parser::parseProper() {
 
 	for ( int i = 0; i < tokens.size(); ++i ) {
         //std::cout << "Token " << i << ": " << tokens[i].string_value << std::endl;
-		
+
 		Token token = tokens[i];
+
+        if (token.string_value == "memory") {
+            auto memory = new AST_Memory;
+            if (tokens[i + 2].string_value == "export") {
+                memory->name = tokens[i + 3].string_value;
+                i += 5;
+            } else {
+                ++i;
+            }
+            memory->initial_value = tokens[i].uint32_value;
+            ++i;
+            if (tokens[i].type == TokenType::NUMBER) {
+                memory->max_value = tokens[i].uint32_value;
+                i+=2;
+            }
+            memories.push_back(memory);
+            continue;
+        }
+
         if (token.string_value == "func") {
             if (currentFunction != nullptr) {
                 output->push_back(new Instruction(InstructionType::INSTRUCTION_WITHOUT_PARAMETER, constants::BLOCK_END));

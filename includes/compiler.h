@@ -5,7 +5,7 @@
 
 #include "bytestream.h"
 #include "instruction.h"
-#include "AST_Function.h"
+#include "AST_Types.h"
 #include <array>
 
 class Compiler {
@@ -13,6 +13,7 @@ private:
     ByteStream* fullOutput = new ByteStream();
     std::vector<Instruction*> instructions;
     std::vector<AST_Function*> functions;
+    std::vector<AST_Memory*> memories;
     std::vector<std::array<std::vector<VariableType>, 2>> functionTypes;
 
     std::vector<Instruction*> foldConstants(std::vector<Instruction*> input);
@@ -30,10 +31,8 @@ private:
     ByteStream* writeDataCountSection();
 
 public:
-	Compiler(std::vector<Instruction*> input) : instructions(input) {};
-    Compiler(std::vector<AST_Function*> input) : functions(input) {};
-    ~Compiler() {}
-    
+    Compiler(std::vector<AST_Function*> funcs, std::vector<AST_Memory*> mems) : functions(funcs), memories(mems) {};
+
     ByteStream* compile();
     void writeFile(std::string filepath) { fullOutput->writeFile(filepath); };
 };
