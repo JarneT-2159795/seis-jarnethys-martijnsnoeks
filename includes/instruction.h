@@ -45,6 +45,10 @@ public:
         if (name == "i32.shr_s") return constants::I32SHR_S;
         if (name == "i32.shr_u") return constants::I32SHR_U;
 
+        if (name == "i32.wrap_i64") return constants::I32WRAP_I64;
+        if (name == "i32.trunc_f32_s") return constants::I32TRUNC_F32_S;
+        if (name == "i32.reinterpret_f32") return constants::I32REINTERPRET_F32;
+
         if ( name == "i64.add" ) return constants::I64ADD;
         if ( name == "i64.sub" ) return constants::I64SUB;
         if ( name == "i64.mul" ) return constants::I64MUL;
@@ -114,7 +118,14 @@ public:
 
     static bool hasNoParameter( uint8_t op ) {
         const std::vector<uint8_t> noParamOPs = {
-                constants::BLOCK_END, constants::IF, constants::ELSE, constants::CALL
+                constants::BLOCK_END, constants::IF, constants::ELSE, constants::CALL,
+                constants::I32ADD, constants::I32SUB, constants::I32MUL, constants::I32DIV_S,
+                constants::I32DIV_U, constants::I32EQZ, constants::I32EQ, constants::I32NE,
+                constants::I32LT_S, constants::I32LT_U, constants::I32GT_S, constants::I32GT_U,
+                constants::I32LE_S, constants::I32LE_U, constants::I32GE_S, constants::I32GE_U,
+                constants::I32AND, constants::I32OR, constants::I32XOR, constants::I32SHL,
+                constants::I32SHR_S, constants::I32SHR_U, constants::I32WRAP_I64,
+                constants::I32TRUNC_F32_S, constants::I32REINTERPRET_F32
         };
         for (uint8_t noParamOP : noParamOPs) {
             if ( noParamOP == op ) return true;
