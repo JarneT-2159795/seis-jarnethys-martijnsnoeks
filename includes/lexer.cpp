@@ -54,8 +54,10 @@ int Lexer::lex()
                     this->tokens.push_back( this->parseString() );
                     break;
                 case '(':
-                case ')':
                     this->tokens.emplace_back(TokenType::BRACKETS_OPEN, std::string(1, this->byteStream->readByte()) ) ;
+                    break;
+                case ')':
+                    this->tokens.emplace_back(TokenType::BRACKETS_CLOSED, std::string(1, this->byteStream->readByte()) ) ;
                     break;
                 case ';':
                     this->parseComment();
