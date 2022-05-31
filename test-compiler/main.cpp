@@ -8,10 +8,7 @@
 
 using namespace std;
 
-int main()
-{
-    std::cout << "TESTING " << std::endl;
-
+int main() {
 	Lexer lexer = Lexer{"./test.wat"};
 
     int err = lexer.lex();
@@ -24,12 +21,11 @@ int main()
 
     Parser parser = Parser(&lexer);
 
-    std::vector<Instruction*> AST = parser.parseProper();
-    auto functions = parser.getFunctions();
-    
+    parser.parseProper();
+
     std::cout << "DONE PARSING " << std::endl;
 
-    Compiler compiler = Compiler(functions);
+    Compiler compiler = Compiler(parser.getFunctions(), parser.getMemories(), parser.getDatas());
     compiler.compile();
     compiler.writeFile("output.wasm");
 

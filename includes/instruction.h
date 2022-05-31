@@ -17,12 +17,37 @@ public:
     static uint8_t getOperation(const std::string& name) {
         if ( name == "local.get" ) return constants::LOCALGET;
         if ( name == "local.set" ) return constants::LOCALSET;
+        if ( name == "local.tee" ) return constants::LOCALTEE;
 
         if ( name == "i32.add" ) return constants::I32ADD;
         if ( name == "i32.sub" ) return constants::I32SUB;
         if ( name == "i32.mul" ) return constants::I32MUL;
+        if ( name == "i32.div_s" ) return constants::I32DIV_S;
+        if ( name == "i32.div_u" ) return constants::I32DIV_U;
         if ( name == "i32.const" ) return constants::I32CONST;
+
+        if ( name == "i32.eqz" ) return constants::I32EQZ;
         if ( name == "i32.eq" ) return constants::I32EQ;
+        if ( name == "i32.ne" ) return constants::I32NE;
+        if ( name == "i32.lt_s" ) return constants::I32LT_S;
+        if ( name == "i32.lt_u" ) return constants::I32LT_U;
+        if ( name == "i32.gt_s" ) return constants::I32GT_S;
+        if ( name == "i32.gt_u" ) return constants::I32GT_U;
+        if ( name == "i32.le_s" ) return constants::I32LE_S;
+        if ( name == "i32.le_u" ) return constants::I32LE_U;
+        if ( name == "i32.ge_s" ) return constants::I32GE_S;
+        if ( name == "i32.ge_u" ) return constants::I32GE_U;
+
+        if (name == "i32.and") return constants::I32AND;
+        if (name == "i32.or") return constants::I32OR;
+        if (name == "i32.xor") return constants::I32XOR;
+        if (name == "i32.shl") return constants::I32SHL;
+        if (name == "i32.shr_s") return constants::I32SHR_S;
+        if (name == "i32.shr_u") return constants::I32SHR_U;
+
+        if (name == "i32.wrap_i64") return constants::I32WRAP_I64;
+        if (name == "i32.trunc_f32_s") return constants::I32TRUNC_F32_S;
+        if (name == "i32.reinterpret_f32") return constants::I32REINTERPRET_F32;
 
         if ( name == "i64.add" ) return constants::I64ADD;
         if ( name == "i64.sub" ) return constants::I64SUB;
@@ -38,6 +63,12 @@ public:
         if (name == "f64.sub") return constants::F64SUB;
         if (name == "f64.mul") return constants::F64MUL;
         if (name == "f64.const") return constants::F64CONST;
+
+        if (name == "i32.load") return constants::I32LOAD;
+        if (name == "i32.store") return constants::I32STORE;
+
+        if (name == "memory.size") return constants::MEMORYSIZE;
+        if (name == "memory.grow") return constants::MEMORYGROW;
 
         if ( name == "if" ) return constants::IF;
         if ( name == "else" ) return constants::ELSE;
@@ -87,7 +118,14 @@ public:
 
     static bool hasNoParameter( uint8_t op ) {
         const std::vector<uint8_t> noParamOPs = {
-                constants::BLOCK_END, constants::IF, constants::ELSE, constants::CALL
+                constants::BLOCK_END, constants::IF, constants::ELSE, constants::CALL,
+                constants::I32ADD, constants::I32SUB, constants::I32MUL, constants::I32DIV_S,
+                constants::I32DIV_U, constants::I32EQZ, constants::I32EQ, constants::I32NE,
+                constants::I32LT_S, constants::I32LT_U, constants::I32GT_S, constants::I32GT_U,
+                constants::I32LE_S, constants::I32LE_U, constants::I32GE_S, constants::I32GE_U,
+                constants::I32AND, constants::I32OR, constants::I32XOR, constants::I32SHL,
+                constants::I32SHR_S, constants::I32SHR_U, constants::I32WRAP_I64,
+                constants::I32TRUNC_F32_S, constants::I32REINTERPRET_F32
         };
         for (uint8_t noParamOP : noParamOPs) {
             if ( noParamOP == op ) return true;
