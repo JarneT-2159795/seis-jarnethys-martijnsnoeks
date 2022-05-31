@@ -34,6 +34,30 @@ void Parser::parseProper() {
             continue;
         }
 
+        if (token.string_value == "local") {
+            if (tokens[i + 1].type == TokenType::KEYWORD) {
+                uint8_t type;
+                switch (InstructionNumber::getType(tokens[++i].string_value)) {
+                    case InstructionNumber::Type::I32:
+                        type = constants::INT32;
+                        break;
+                    case InstructionNumber::Type::I64:
+                        type = constants::INT64;
+                        break;
+                    case InstructionNumber::Type::F32:
+                        type = constants::FLOAT32;
+                        break;
+                    case InstructionNumber::Type::F64:
+                        type = constants::FLOAT64;
+                        break;
+                    default:
+                        std::cout << "Unknown local type: " << tokens[i].string_value << std::endl;
+                }
+                currentFunction->locals.insert(std::make_pair("", std::make_pair(currentFunction->locals.size(), type)));
+                continue;
+            }
+        }
+
         if (token.string_value == "memory") {
             AST_Memory* memory;
             // only one memory block allowed in current WA spec
@@ -185,6 +209,8 @@ void Parser::parseProper() {
                         if (op == constants::I32STORE || op == constants::I32LOAD) {
                             i += 3;
                             instruction->parameter = tokens[i].uint32_value;
+                        } else if(op == constants::MEMORYSIZE || op == constants::MEMORYGROW) {
+                            instruction->parameter = 0; // only one block of memory in the current WA spec
                         } else {
                             Token parameter = tokens[++i]; // parameter MUST be next behind this
                             if (parameter.type == TokenType::VARIABLE) {
