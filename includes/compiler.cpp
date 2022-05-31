@@ -225,6 +225,32 @@ ByteStream *Compiler::compile() {
         fullOutput->fixUpByte(fixUpByte - 1, fullOutput->getCurrentByteIndex() - fixUpByte);
     }
 
+    if (datas.size() > 0) {
+        // dataCount section
+        fullOutput->writeByte(0x0C);
+        fullOutput->writeByte(0);
+        fixUpByte = fullOutput->getCurrentByteIndex();
+        fullOutput->writeByte(datas.size());
+        fullOutput->fixUpByte(fixUpByte - 1, fullOutput->getCurrentByteIndex() - fixUpByte);
+
+        // data section
+        fullOutput->writeByte(0x0B);
+        fullOutput->writeByte(0);
+        fixUpByte = fullOutput->getCurrentByteIndex();
+        fullOutput->writeByte(datas.size());
+        for (auto data : datas) {
+            fullOutput->writeByte(0); // flags
+            fullOutput->writeByte(data->type);
+            fullOutput->writeByte(data->value);
+            fullOutput->writeByte(0xB);
+            fullOutput->writeByte(data->data.length());
+            for (char byte : data->data) {
+                fullOutput->writeByte(byte);
+            }
+        }
+        fullOutput->fixUpByte(fixUpByte - 1, fullOutput->getCurrentByteIndex() - fixUpByte);
+    }
+
     // code section
     if ((functions.size() - importFunctions) > 0) {
         fullOutput->writeByte(0x0A);

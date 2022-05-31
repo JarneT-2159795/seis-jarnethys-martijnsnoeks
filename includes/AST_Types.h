@@ -27,5 +27,10 @@ typedef struct AST_Memory {
     std::string importField;
 } AST_Memory;
 
+typedef struct AST_Data {
+    uint8_t type;
+    uint32_t value;
+    std::string data;
+} AST_Data;
 
 #endif

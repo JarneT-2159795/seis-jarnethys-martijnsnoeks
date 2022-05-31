@@ -25,7 +25,7 @@ int main() {
 
     std::cout << "DONE PARSING " << std::endl;
 
-    Compiler compiler = Compiler(parser.getFunctions(), parser.getMemories());
+    Compiler compiler = Compiler(parser.getFunctions(), parser.getMemories(), parser.getDatas());
     compiler.compile();
     compiler.writeFile("output.wasm");
 

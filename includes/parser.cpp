@@ -58,6 +58,17 @@ void Parser::parseProper() {
             }
         }
 
+        if (token.string_value == "data") {
+            auto data = new AST_Data;
+            ++i;
+            data->type = InstructionNumber::getOperation(tokens[++i].string_value);
+            data->value = tokens[++i].uint32_value;
+            ++i;
+            data->data = tokens[++i].string_value;
+            datas.push_back(data);
+            continue;
+        }
+
         if (token.string_value == "memory") {
             AST_Memory* memory;
             // only one memory block allowed in current WA spec
