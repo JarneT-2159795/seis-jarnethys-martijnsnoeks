@@ -68,6 +68,9 @@ int Lexer::lex()
                     }
                     tokens.push_back(this->parseVarName());
                     break;
+                    case '=':
+                        this->tokens.emplace_back(TokenType::KEYWORD, std::string(1, this->byteStream->readByte()));
+                        break;
                 default:
                     std::cout << "Unknown character " << this->byteStream->peekByte() << " at byte " << this->byteStream->getCurrentByteIndex() << std::endl;
                     this->tokens.emplace_back(TokenType::STRING, std::string(1, this->byteStream->readByte()) ) ;

@@ -39,6 +39,9 @@ public:
         if (name == "f64.mul") return constants::F64MUL;
         if (name == "f64.const") return constants::F64CONST;
 
+        if (name == "i32.load") return constants::I32LOAD;
+        if (name == "i32.store") return constants::I32STORE;
+
         if ( name == "if" ) return constants::IF;
         if ( name == "else" ) return constants::ELSE;
         if ( name == "call" ) return constants::CALL;

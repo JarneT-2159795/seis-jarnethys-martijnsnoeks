@@ -19,7 +19,7 @@ private:
     std::vector<Instruction*> foldConstants(std::vector<Instruction*> input);
     ByteStream* compileBody(AST_Function* function);
     void writeTypeSection();
-    ByteStream* writeImportSection();
+    void writeImportSection();
     ByteStream* writeTableSection();
     ByteStream* writeMemorySection();
     ByteStream* writeGlobalSection();

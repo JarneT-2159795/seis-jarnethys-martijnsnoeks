@@ -21,6 +21,12 @@ ByteStream* Compiler::compileBody(AST_Function* function) {
     for ( auto instruction : body ) {
         fullOutput->writeByte( instruction->instruction_code );
 
+        if (instruction->instruction_code == constants::I32STORE || instruction->instruction_code == constants::I32LOAD) {
+            fullOutput->writeByte(2); // alignment
+            fullOutput->writeByte(instruction->parameter);
+            continue;
+        }
+
         if ( instruction->type == InstructionType::INSTRUCTION_WITH_PARAMETER ) {
             fullOutput->writeUInt32( instruction->parameter );
         } else if ( instruction->type == InstructionType::CONST ) {
@@ -57,61 +63,13 @@ ByteStream* Compiler::compileBody(AST_Function* function) {
         }
     }
     fullOutput->fixUpByte(bodyFixup - 1, fullOutput->getCurrentByteIndex() - bodyFixup);
-    
 
-    //int writtenByteCount = output->getCurrentByteIndex() - 1; // -1 because byteIndex is ready to write a new byte now!
-
-	//output->setByteIndex(0);
-
-	//std::cout << "Nr bytes written " << writtenByteCount << std::endl;
-/*
-	int c = 0;
-	while( c <= writtenByteCount ) { 
-		unsigned char byte = output->readByte();
-
-		std::cout << std::hex << std::setw(2) << std::setfill('0') << (int) byte << std::dec << std::endl;
-
-		++c;
-	}
-*/
     return fullOutput;
 }
 
 
 std::vector<Instruction*> Compiler::foldConstants(std::vector<Instruction*> input) {
     std::vector<Instruction*> output;
-
-    // Logic: we want to fold constants and their operations here
-    // For example:
-    //      i32.const 15
-    //      i32.const 20
-    //      i32.add
-    // should just be replaced with:
-    //      i32.const 35
-    // TODO: support more than just i32.add
-
-    // general logic: when we encounter an add, look back to the previous two instructions
-    // if those are of type CONST, we can fold!
-
-    // practical logic: 
-    // if we encounter a const, look 2 ahead. If it's another const and an add, merge, skip them.
-    
-    // finally, we want to be able to "collapse" this:
-    //      i32.const 15
-    //      i32.const 20
-    //      i32.add
-    //      i32.const 30
-    //      i32.add
-    // should finally become:
-    //      i32.const 65
-    // we COULD do this in 1 pass, but that would mean more complex code
-    // below, we do this in multiple passes, were we first collapse the first constant add,
-    // which then becomes
-    //      i32.const 35
-    //      i32.const 30
-    //      i32.add
-    // which can then be collapsed in the second iteration
-
     bool mergedSomethingInPreviousIteration = true;
 
     while( mergedSomethingInPreviousIteration ){
@@ -131,7 +89,6 @@ std::vector<Instruction*> Compiler::foldConstants(std::vector<Instruction*> inpu
 					Instruction *folded = new Instruction( InstructionType::CONST );
 					folded->instruction_code = (int) instruction->instruction_code; // is i32.const!
 
-                    // TODO: support other things besides i32.add!!!
                     if ( nextnext->instruction_code == constants::I32ADD ) {
 					    folded->parameter = instruction->parameter + next->parameter;
                         
@@ -177,66 +134,109 @@ std::vector<Instruction*> Compiler::foldConstants(std::vector<Instruction*> inpu
 }
 
 ByteStream *Compiler::compile() {
+    int fixUpByte;
+    bool exportFound = false;
+
     // magic number and version
     for (uint8_t byte : {0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00}) {
         fullOutput->writeByte(byte);
     }
 
     // type section
-    fullOutput->writeByte(0x01);
-    fullOutput->writeByte(0);
-    int fixUpByte(fullOutput->getCurrentByteIndex());
-    writeTypeSection();
-    fullOutput->fixUpByte(fixUpByte - 1, fullOutput->getCurrentByteIndex() - fixUpByte);
+    if (!functions.empty()) {
+        fullOutput->writeByte(0x01);
+        fullOutput->writeByte(0);
+        fixUpByte = fullOutput->getCurrentByteIndex();
+        writeTypeSection();
+        fullOutput->fixUpByte(fixUpByte - 1, fullOutput->getCurrentByteIndex() - fixUpByte);
+    }
+
+    // import section
+    // imported memory or functions will always be first in the list
+    if (!memories.empty()) {
+        if (memories[0]->isImported) {
+            writeImportSection();
+        }
+    } else if (!functions.empty()) {
+        if (functions[0]->isImported) {
+            writeImportSection();
+        }
+    }
 
     // function section
-    fullOutput->writeByte(0x03);
-    fullOutput->writeByte(1 + functions.size());
-    fullOutput->writeByte(functions.size());
-    for (auto func : functions) {
-        for (int i = 0; i < functionTypes.size(); i++) {
-            auto type = functionTypes[i];
-            if (type[0] == func->parameters && type[1] == func->results) {
-                fullOutput->writeByte(i);
-                break;
+    int importFunctions = 0;
+    for (auto function : functions) {
+        if (function->isImported) {
+            importFunctions++;
+        }
+    }
+    if ((functions.size() - importFunctions) > 0) {
+        fullOutput->writeByte(0x03);
+        fullOutput->writeByte(1 + (functions.size() - importFunctions));
+        fullOutput->writeByte((functions.size() - importFunctions));
+        for (auto func : functions) {
+            if (func->isImported) {
+                continue;
+            }
+            if (func->name.length() > 0) {
+                exportFound = true;
+            }
+            for (int i = 0; i < functionTypes.size(); i++) {
+                auto type = functionTypes[i];
+                if (type[0] == func->parameters && type[1] == func->results) {
+                    fullOutput->writeByte(i);
+                    break;
+                }
             }
         }
     }
 
     // memory section
-    fullOutput->writeByte(0x05);
-    fullOutput->writeByte(0);
-    fixUpByte = fullOutput->getCurrentByteIndex();
-    fullOutput->writeByte(memories.size());
-    for (auto memory : memories) {
-        if (memory->max_value > 0) {
-            fullOutput->writeByte(1); // limits flag for 2 limits
-        } else {
-            fullOutput->writeByte(0); // no upper limit
-        }
-        fullOutput->writeByte(memory->initial_value);
-        if (memory->max_value > 0) {
-            fullOutput->writeByte(memory->max_value);
+    if (!memories.empty()) {
+        if (!memories[0]->isImported) {
+            exportFound = true;
+            fullOutput->writeByte(0x05);
+            fullOutput->writeByte(0);
+            fixUpByte = fullOutput->getCurrentByteIndex();
+            fullOutput->writeByte(memories.size());
+            for (auto memory: memories) {
+                if (memory->max_value > 0) {
+                    fullOutput->writeByte(1); // limits flag for 2 limits
+                } else {
+                    fullOutput->writeByte(0); // no upper limit
+                }
+                fullOutput->writeByte(memory->initial_value);
+                if (memory->max_value > 0) {
+                    fullOutput->writeByte(memory->max_value);
+                }
+            }
+            fullOutput->fixUpByte(fixUpByte - 1, fullOutput->getCurrentByteIndex() - fixUpByte);
         }
     }
-    fullOutput->fixUpByte(fixUpByte - 1, fullOutput->getCurrentByteIndex() - fixUpByte);
 
     // export section
-    fullOutput->writeByte(0x07);
-    fullOutput->writeByte(0);
-    fixUpByte = fullOutput->getCurrentByteIndex();
-    writeExportSection();
-    fullOutput->fixUpByte(fixUpByte - 1, fullOutput->getCurrentByteIndex() - fixUpByte);
+    if (exportFound) {
+        fullOutput->writeByte(0x07);
+        fullOutput->writeByte(0);
+        fixUpByte = fullOutput->getCurrentByteIndex();
+        writeExportSection();
+        fullOutput->fixUpByte(fixUpByte - 1, fullOutput->getCurrentByteIndex() - fixUpByte);
+    }
 
     // code section
-    fullOutput->writeByte(0x0A);
-    fullOutput->writeByte(0);
-    fixUpByte = fullOutput->getCurrentByteIndex();
-    fullOutput->writeByte(functions.size());
-    for (auto function : functions) {
-        compileBody(function);
+    if ((functions.size() - importFunctions) > 0) {
+        fullOutput->writeByte(0x0A);
+        fullOutput->writeByte(0);
+        fixUpByte = fullOutput->getCurrentByteIndex();
+        fullOutput->writeByte(functions.size() - importFunctions);
+        for (auto function : functions) {
+            if (function->isImported) {
+                continue;
+            }
+            compileBody(function);
+        }
+        fullOutput->fixUpByte(fixUpByte - 1, fullOutput->getCurrentByteIndex() - fixUpByte);
     }
-    fullOutput->fixUpByte(fixUpByte - 1, fullOutput->getCurrentByteIndex() - fixUpByte);
 
     return fullOutput;
 }
@@ -302,13 +302,19 @@ void Compiler::writeTypeSection() {
 void Compiler::writeExportSection() {
     int memCount = 0;
     for (auto memory : memories) {
-        if (memory->name.length() > 0) {
+        if (memory->name.length() > 0 && !memory->isImported) {
             memCount++;
         }
     }
-    fullOutput->writeByte(functions.size() + memCount);
+    int funcCount = 0;
+    for (auto function : functions) {
+        if (function->name.length() > 0 && !function->isImported) {
+            funcCount++;
+        }
+    }
+    fullOutput->writeByte(funcCount + memCount);
     for (int i = 0; i < memories.size(); i++) {
-        if (memories[i]->name.length() == 0) {
+        if (memories[i]->name.length() == 0 || memories[i]->isImported) {
             continue;
         }
         fullOutput->writeByte(memories[i]->name.length());
@@ -319,6 +325,9 @@ void Compiler::writeExportSection() {
         fullOutput->writeByte(i); // index
     }
     for (int i = 0; i < functions.size(); i++) {
+        if (functions[i]->name.length() == 0 || functions[i]->isImported) {
+            continue;
+        }
         fullOutput->writeByte(functions[i]->name.size());
         for (auto c : functions[i]->name) {
             fullOutput->writeByte(c);
@@ -326,4 +335,63 @@ void Compiler::writeExportSection() {
         fullOutput->writeByte(0); // type = function
         fullOutput->writeByte(i); // index
     }
+}
+
+void Compiler::writeImportSection() {
+    fullOutput->writeByte(0x02);
+    fullOutput->writeByte(0);
+    int fixUpByte = fullOutput->getCurrentByteIndex();
+
+    int exportMem = 0, exportFunc = 0;
+    for (auto memory : memories) {
+        if (memory->isImported) {
+            exportMem++;
+        }
+    }
+    for (auto function : functions) {
+        if (function->isImported) {
+            exportFunc++;
+        }
+    }
+    fullOutput->writeByte(exportMem + exportFunc);
+    for (int i = 0; i < exportMem; i++) {
+        fullOutput->writeByte(memories[i]->importModule.length());
+        for (auto c : memories[i]->importModule) {
+            fullOutput->writeByte(c);
+        }
+        fullOutput->writeByte(memories[i]->importField.length());
+        for (auto c : memories[i]->importField) {
+            fullOutput->writeByte(c);
+        }
+        fullOutput->writeByte(2); // type = memory
+        if (memories[i]->max_value > 0) {
+            fullOutput->writeByte(1); // limits flag for 2 limits
+        } else {
+            fullOutput->writeByte(0); // no upper limit
+        }
+        fullOutput->writeByte(memories[i]->initial_value);
+        if (memories[i]->max_value > 0) {
+            fullOutput->writeByte(memories[i]->max_value);
+        }
+    }
+    for (int i = 0; i < exportFunc; i++) {
+        fullOutput->writeByte(functions[i]->importModule.length());
+        for (auto c : functions[i]->importModule) {
+            fullOutput->writeByte(c);
+        }
+        fullOutput->writeByte(functions[i]->importField.length());
+        for (auto c : functions[i]->importField) {
+            fullOutput->writeByte(c);
+        }
+        fullOutput->writeByte(0); // type = function
+        for (int j = 0; j < functionTypes.size(); ++j) {
+            auto type = functionTypes[j];
+            if (type[0] == functions[i]->parameters && type[1] == functions[i]->results) {
+                fullOutput->writeByte(j);
+                break;
+            }
+        }
+    }
+
+    fullOutput->fixUpByte(fixUpByte - 1, fullOutput->getCurrentByteIndex() - fixUpByte);
 }

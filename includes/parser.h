@@ -18,8 +18,7 @@ public:
 	Parser(Lexer *lexer) : lexer(lexer) {}
     ~Parser() {}
     
-    //ByteStream* parseSimple();
-    std::vector<Instruction*> parseProper();
+    void parseProper();
     std::vector<AST_Function*> getFunctions() { return functions; }
     std::vector<AST_Memory*> getMemories() { return memories; }
 };

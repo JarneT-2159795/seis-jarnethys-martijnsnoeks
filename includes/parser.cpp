@@ -11,7 +11,7 @@
 
 using namespace std;
 
-std::vector<Instruction*> Parser::parseProper() {
+void Parser::parseProper() {
 	std::vector<Token> tokens = this->lexer->getTokens();
 
 	// Proper parser will map instructions to the main calculations and their operands, if applicable
@@ -30,8 +30,18 @@ std::vector<Instruction*> Parser::parseProper() {
 
 		Token token = tokens[i];
 
+        if (token.string_value == "module") {
+            continue;
+        }
+
         if (token.string_value == "memory") {
-            auto memory = new AST_Memory;
+            AST_Memory* memory;
+            // only one memory block allowed in current WA spec
+            if (memories.empty()) {
+                memory = new AST_Memory;
+            } else {
+                memory = memories[0];
+            }
             if (tokens[i + 2].string_value == "export") {
                 memory->name = tokens[i + 3].string_value;
                 i += 5;
@@ -44,17 +54,47 @@ std::vector<Instruction*> Parser::parseProper() {
                 memory->max_value = tokens[i].uint32_value;
                 i+=2;
             }
-            memories.push_back(memory);
+            if (!memory->isImported) {
+                memories.push_back(memory);
+            }
             continue;
+        }
+
+        if (token.string_value == "import") {
+            std::string module = tokens[i + 1].string_value;
+            std::string field = tokens[i + 2].string_value;
+            i += 3;
+            if (tokens[i + 1].string_value == "memory") {
+                auto memory = new AST_Memory;
+                memory->isImported = true;
+                memory->importModule = module;
+                memory->importField = field;
+                memories.push_back(memory);
+                continue;
+            } else if(tokens[i + 1].string_value == "func") {
+                auto func = new AST_Function;
+                func->isImported = true;
+                func->importModule = module;
+                func->importField = field;
+                currentFunction = func;
+                i++;
+                continue;
+            }
         }
 
         if (token.string_value == "func") {
             if (currentFunction != nullptr) {
-                output->push_back(new Instruction(InstructionType::INSTRUCTION_WITHOUT_PARAMETER, constants::BLOCK_END));
-                currentFunction->body = output;
-                functions.push_back(currentFunction);
-                output = new std::vector<Instruction*>();
-                currentFunction = new AST_Function;
+                if (!currentFunction->isImported) {
+                    output->push_back(new Instruction(InstructionType::INSTRUCTION_WITHOUT_PARAMETER, constants::BLOCK_END));
+                    currentFunction->body = output;
+                    functions.push_back(currentFunction);
+                    output = new std::vector<Instruction*>();
+                    currentFunction = new AST_Function;
+                } else {
+                    functions.push_back(currentFunction);
+                    output = new std::vector<Instruction*>();
+                    currentFunction = new AST_Function;
+                }
             } else {
                 currentFunction = new AST_Function;
                 output = new std::vector<Instruction*>;
@@ -142,11 +182,16 @@ std::vector<Instruction*> Parser::parseProper() {
                         Instruction *instruction = instruction = new Instruction(
                                 InstructionType::INSTRUCTION_WITH_PARAMETER);
                         instruction->instruction_code = (int) op;
-                        Token parameter = tokens[++i]; // parameter MUST be next behind this
-                        if (parameter.type == TokenType::VARIABLE) {
-                            instruction->parameter = currentFunction->locals[parameter.string_value].first;
+                        if (op == constants::I32STORE || op == constants::I32LOAD) {
+                            i += 3;
+                            instruction->parameter = tokens[i].uint32_value;
                         } else {
-                            instruction->parameter = parameter.uint32_value;
+                            Token parameter = tokens[++i]; // parameter MUST be next behind this
+                            if (parameter.type == TokenType::VARIABLE) {
+                                instruction->parameter = currentFunction->locals[parameter.string_value].first;
+                            } else {
+                                instruction->parameter = parameter.uint32_value;
+                            }
                         }
 
                         output->push_back(instruction);
@@ -204,14 +249,17 @@ std::vector<Instruction*> Parser::parseProper() {
 		}
 	}
     if (currentFunction != nullptr) {
-        output->push_back(new Instruction(InstructionType::INSTRUCTION_WITHOUT_PARAMETER, constants::BLOCK_END));
-        currentFunction->body = output;
-        functions.push_back(currentFunction);
+        if (!currentFunction->isImported) {
+            output->push_back(new Instruction(InstructionType::INSTRUCTION_WITHOUT_PARAMETER, constants::BLOCK_END));
+            currentFunction->body = output;
+            functions.push_back(currentFunction);
+        } else {
+            functions.push_back(currentFunction);
+        }
     }
 /*
 	for ( auto instruction : output ) {
 		std::cout << "Instruction " << (int) instruction->type << " for operation " << instruction->instruction_code << " with potential parameter " << instruction->parameter << std::endl;
 	}
 */
-	return *output;
 }

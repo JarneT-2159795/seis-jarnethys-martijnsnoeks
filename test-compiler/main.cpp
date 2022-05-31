@@ -8,10 +8,7 @@
 
 using namespace std;
 
-int main()
-{
-    std::cout << "TESTING " << std::endl;
-
+int main() {
 	Lexer lexer = Lexer{"./test.wat"};
 
     int err = lexer.lex();
