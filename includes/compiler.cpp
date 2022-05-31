@@ -194,7 +194,9 @@ ByteStream *Compiler::compile() {
     // memory section
     if (!memories.empty()) {
         if (!memories[0]->isImported) {
-            exportFound = true;
+            if (memories[0]->name.length() > 0) {
+                exportFound = true;
+            }
             fullOutput->writeByte(0x05);
             fullOutput->writeByte(0);
             fixUpByte = fullOutput->getCurrentByteIndex();
