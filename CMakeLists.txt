@@ -24,7 +24,7 @@ add_executable(seis_jarnethys_martijnsnoeks
         includes/stack.cpp
         includes/stack.h
         includes/token.h
-        includes/AST_Function.h
+        includes/AST_Types.h
         includes/Memory.cpp
         includes/Memory.h
         includes/Variable.h

@@ -15,5 +15,11 @@ typedef struct AST_Function {
     std::unordered_map<std::string, std::pair<uint32_t, uint8_t>> locals = {};
 } AST_Function;
 
+typedef struct AST_Memory {
+    std::string name;
+    int initial_value = 0;
+    int max_value = 0;
+} AST_Memory;
+
 
 #endif
