@@ -102,12 +102,14 @@ Token Lexer::parseNumber()
 {
     std::string val = "";
 
-    while( Character::isNumeric(this->byteStream->peekByte()) || this->byteStream->peekByte() == '.' ) {
+    while( Character::isNumeric(this->byteStream->peekByte()) || this->byteStream->peekByte() == '.' || this->byteStream->peekByte() == 'x' ) {
         val.append( 1, this->byteStream->readByte() );
     }
 
     if (val.find('.') != std::string::npos) {
         return Token(TokenType::NUMBER, std::stod(val));
+    } else if (val.find('x') != std::string::npos) {
+        return Token(TokenType::NUMBER, (uint32_t)std::stoul(val, nullptr, 16));
     }
     return Token( TokenType::NUMBER, (uint32_t)std::stoi(val) );
 }
