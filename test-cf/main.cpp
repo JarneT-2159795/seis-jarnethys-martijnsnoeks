@@ -9,7 +9,7 @@ extern "C" {
     int useModule(uint8_t *data, int size, char* name, int32_t *int32Input, int64_t *int64Input, float32_t *float32Input, float64_t *float64Input,
                     int32_t *int32Output, int64_t *int64Output, float32_t *float32Output, float64_t *float64Output);
     int compile(uint8_t *data, int size, char *name, int32_t *int32Input, int64_t *int64Input, float32_t *float32Input, float64_t *float64Input,
-                    int32_t *int32Output, int64_t *int64Output, float32_t *float32Output, float64_t *float64Output);
+                    int32_t *int32Output, int64_t *int64Output, float32_t *float32Output, float64_t *float64Output, uint8_t *output, int *outputSize);
     int randomInt() {
         srand(time(0));
         return rand();
@@ -17,7 +17,7 @@ extern "C" {
 }
 
 int compile(uint8_t *data, int size, char *name, int32_t *int32Input, int64_t *int64Input, float32_t *float32Input, float64_t *float64Input,
-                int32_t *int32Output, int64_t *int64Output, float32_t *float32Output, float64_t *float64Output) {
+                int32_t *int32Output, int64_t *int64Output, float32_t *float32Output, float64_t *float64Output, uint8_t *output, int *outputSize) {
     std::vector<uint8_t> chars;
     for (int i = 0; i < size; i++) {
         chars.push_back(data[i]);
@@ -28,14 +28,17 @@ int compile(uint8_t *data, int size, char *name, int32_t *int32Input, int64_t *i
 
     Parser parser = Parser(&lexer);
 
-    //ByteStream* compiledOutput = parser.parseSimple();
-    std::vector<Instruction*> AST = parser.parseProper();
-    auto functions = parser.getFunctions();
+    parser.parseProper();
     
-
-    //Compiler compiler = Compiler(AST);
-    Compiler compiler = Compiler(functions);
+    Compiler compiler = Compiler(parser.getFunctions(), parser.getMemories(), parser.getDatas());
     auto compiledOutput = compiler.compile();
+
+    uint8_t *outputbuffer = (uint8_t *)malloc(compiledOutput->getTotalByteCount());
+    compiledOutput->setByteIndex(0);
+    for (int i = 0; i < compiledOutput->getTotalByteCount(); i++) {
+        output[i] = compiledOutput->readByte();
+    }
+    *outputSize = compiledOutput->getTotalByteCount();
 
     useModule(compiledOutput->getBuffer(), compiledOutput->getTotalByteCount(), name, int32Input, int64Input, float32Input, float64Input,
                 int32Output, int64Output, float32Output, float64Output);
