@@ -218,8 +218,12 @@ void Parser::parseProper() {
                                 InstructionType::INSTRUCTION_WITH_PARAMETER);
                         instruction->instruction_code = (int) op;
                         if (op == constants::I32STORE || op == constants::I32LOAD) {
-                            i += 3;
-                            instruction->parameter = tokens[i].uint32_value;
+                            if (tokens[i + 1].string_value == "offset") {
+                                i += 3;
+                                instruction->parameter = tokens[i].uint32_value;
+                            } else {
+                                instruction->parameter = 0;
+                            }
                         } else if(op == constants::MEMORYSIZE || op == constants::MEMORYGROW) {
                             instruction->parameter = 0; // only one block of memory in the current WA spec
                         } else if(op == constants::IF || op == constants::LOOP || op == constants::BLOCK) {
