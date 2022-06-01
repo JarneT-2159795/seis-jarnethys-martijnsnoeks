@@ -449,14 +449,37 @@ const watHTML = `<!DOCTYPE html>
     </head> 
     <body style="padding-left: 200px;"> 
         <h1>SEIS-UI</h1> 
-        Function: <input type="text" id="functionName" value="randomInt"/><br/><br/>
+        Function: <input type="text" id="functionName" value="whileOne"/><br/><br/>
         Amount of inputs: <input type="number" id="numInputs" value="0" onchange="setInputs()"/><br/><br/> 
         <span id="input"></span><br/> 
         int32 outputs: <input type="number" id="outint32" value="1"/><br/> 
         int64 outputs: <input type="number" id="outint64" value="0"/><br/> 
         float32 outputs: <input type="number" id="outfloat32" value="0"/><br/> 
         float64 outputs: <input type="number" id="outfloat64" value="0"/><br/><br/>
-        <textarea id="wat" rows="10" cols="100"></textarea><br/><br/> 
+        <textarea id="wat" rows="20" cols="100">
+(module
+  (func (export "whileOne") (result i32) (local $i i32)
+        i32.const 5
+        local.set $i  ;; i = first input parameter
+
+        (loop
+            ;; add one to $i
+            local.get $i
+            i32.const 1
+            i32.add
+            local.set $i
+
+            ;; if $i is less than 10, jump back to loop
+            local.get $i
+            i32.const 10
+            i32.lt_s        ;; _s = signed variant of lt
+            br_if 0
+        )
+      
+        local.get $i ;; return final value of $i, should be 10
+    )
+)               
+        </textarea><br/><br/> 
         <input type="checkbox" id="download">Download wasm<br/>
         <input type="button" onclick="runFunction()" value="Run function"/><br/>
         <textarea id="output" rows="4" cols="40" readonly></textarea> 
