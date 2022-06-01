@@ -1,6 +1,6 @@
 ---
 layout: page
-title: WebAssembly paper
+title: WebAssembly paper":"
 permalink: /paper
 ---
 
