@@ -163,12 +163,16 @@ async function HandlePostCompile(request) {
     f64OutBuffer = instance._malloc(outf64.length * outf64.BYTES_PER_ELEMENT);
   }
 
+  let bytesOut = instance._malloc(200000);
+  let bytesOutCount = instance._malloc(1 * 4);
+
   let nameBuffer = instance._malloc(name.length * name.BYTES_PER_ELEMENT);
   instance.HEAPU8.set(bts, buffer);
   instance.HEAPU8.set(name, nameBuffer);
 
   instance["_compile"](buffer, bts.length, nameBuffer, i32buffer, i64buffer, f32buffer, f64buffer, 
-                                i32OutBuffer, i64OutBuffer, f32OutBuffer, f64OutBuffer);
+                                i32OutBuffer, i64OutBuffer, f32OutBuffer, f64OutBuffer, bytesOut, bytesOutCount);
+  
   if (i32OutBuffer != -1) {
     i32OutBuffer = new Int32Array(instance.HEAP32.buffer, i32OutBuffer, outi32.length);
   }
@@ -181,11 +185,16 @@ async function HandlePostCompile(request) {
   if (f64OutBuffer != -1) {
     f64OutBuffer = new Float64Array(instance.HEAPF64.buffer, f64OutBuffer, outf64.length);
   }
+
+  bytesOutCount = new Int32Array(instance.HEAP32.buffer, bytesOutCount, 1);
+  let bytesOutBuffer = new Uint8Array(instance.HEAPU8.buffer, bytesOut, bytesOutCount[0]);
+
   let resultJson = JSON.stringify({
     "i32": JSON.stringify(Array.from(i32OutBuffer)),
     "i64": JSON.stringify(Array.from(i64OutBuffer)),
     "f32": JSON.stringify(Array.from(f32OutBuffer)),
-    "f64": JSON.stringify(Array.from(f64OutBuffer))
+    "f64": JSON.stringify(Array.from(f64OutBuffer)),
+    "bytes": JSON.stringify(Array.from(bytesOutBuffer))
   });
 
   let response = new Response(resultJson, { 'status': 200, 'content-type': 'text/plain' });
@@ -397,7 +406,31 @@ const watHTML = `<!DOCTYPE html>
                 xhr.setRequestHeader("Accept", "application/json"); xhr.setRequestHeader("Content-Type", "text/plain"); 
                 xhr.setRequestHeader('Access-Control-Allow-Headers', '*'); 
 
-                xhr.onload = () => { data = JSON.parse(xhr.responseText); outText = ""; i32Arr = JSON.parse(data["i32"]); i64Arr = JSON.parse(data["i64"]); f32Arr = JSON.parse(data["f32"]); f64Arr = JSON.parse(data["f64"]); outText += "i32: "; for (let i = 0; i < i32Arr.length; i++) { outText += i32Arr[i] + " "; } outText += "\\ni64: "; for (let i = 0; i < i64Arr.length; i++) { outText += i64Arr[i] + " "; } outText += "\\nf32: "; for (let i = 0; i < f32Arr.length; i++) { outText += f32Arr[i] + " "; } outText += "\\nf64: "; for (let i = 0; i < f64Arr.length; i++) { outText += f64Arr[i] + " "; } document.getElementById("output").innerHTML = outText; }; 
+                xhr.onload = () => { 
+                  data = JSON.parse(xhr.responseText); 
+                  outText = ""; 
+                  i32Arr = JSON.parse(data["i32"]); 
+                  i64Arr = JSON.parse(data["i64"]); 
+                  f32Arr = JSON.parse(data["f32"]); 
+                  f64Arr = JSON.parse(data["f64"]);
+                  bytes = new Uint8Array(JSON.parse(data["bytes"]));
+                  outText += "i32: "; 
+                  for (let i = 0; i < i32Arr.length; i++) { 
+                    outText += i32Arr[i] + " "; 
+                  } 
+                  outText += "\\ni64: "; 
+                  for (let i = 0; i < i64Arr.length; i++) { outText += i64Arr[i] + " "; } outText += "\\nf32: "; for (let i = 0; i < f32Arr.length; i++) { outText += f32Arr[i] + " "; } outText += "\\nf64: "; for (let i = 0; i < f64Arr.length; i++) { outText += f64Arr[i] + " "; }
+                  document.getElementById("output").innerHTML = outText; 
+                  if (document.getElementById("download").checked == true) {
+                    let blob = new Blob([bytes], { type: "application/wasm" });
+                    let file = new File([bytes], "output.wasm", {
+                        type: blob.type,
+                        lastModified: new Date().getTime()
+                    })
+                    let blobUrl = URL.createObjectURL(file);
+                    window.location.replace(blobUrl);
+                  }
+                };
 
                 let data = { 
                     "function": document.getElementById("functionName").value, 
@@ -424,6 +457,7 @@ const watHTML = `<!DOCTYPE html>
         float32 outputs: <input type="number" id="outfloat32" value="0"/><br/> 
         float64 outputs: <input type="number" id="outfloat64" value="0"/><br/><br/>
         <textarea id="wat" rows="10" cols="100"></textarea><br/><br/> 
+        <input type="checkbox" id="download">Download wasm<br/>
         <input type="button" onclick="runFunction()" value="Run function"/><br/>
         <textarea id="output" rows="4" cols="40" readonly></textarea> 
     </body>
