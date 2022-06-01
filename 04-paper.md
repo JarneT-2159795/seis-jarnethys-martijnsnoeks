@@ -30,7 +30,7 @@ WASM does not use all of the possible register addressing methods resulting in s
 
 WASM needs to do extra safety checks in runtime on every jump to see if it jumps to a valid index this also generates extra CPU cycles.
 
-# Discussion
+## Discussion
 
 The results found in this paper show that further compiler optimisations might still be necessary for web assembly. This however won’t eliminate the gap completely because a big portion of the slowdown is inherent to the architecture of the language itself. Furthermore do we think that while web assembly did need to be tested in a wider set of benchmarks that better represent real world use cases, SPEC C might not have been the correct choice due to the extensive use of system calls something web assembly was never designed to do. To reduce the register pressure a version of web assembly that isn’t designed to run in conjunction with JavaScript might be an option because then there wont be a need for 2 registers for the JavaScript garbage collector. This however would mean that the current structure of a WASM backend and a JS frontend would no longer be possible which in our opinion isn’t a good trade-off.
 
