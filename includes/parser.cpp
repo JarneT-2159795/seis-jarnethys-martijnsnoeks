@@ -223,7 +223,7 @@ void Parser::parseProper() {
                         } else if(op == constants::MEMORYSIZE || op == constants::MEMORYGROW) {
                             instruction->parameter = 0; // only one block of memory in the current WA spec
                         } else if(op == constants::IF || op == constants::LOOP || op == constants::BLOCK) {
-                            if (tokens[i + 1].string_value == "(") {
+                            if (tokens[i + 1].string_value == "(" && tokens[i + 2].string_value == "result") {
                                 i += 3;
                                 while (tokens[i].string_value != ")") {
                                     switch(InstructionNumber::getType(tokens[i].string_value)) {
