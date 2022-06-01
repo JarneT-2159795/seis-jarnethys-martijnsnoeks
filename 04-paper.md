@@ -1,7 +1,7 @@
 ---
 layout: page
-title: WebAssembly paper":" "Not So Fast":" Analyzing the Performance
-of WebAssembly vs. Native Code"
+title: WebAssembly paper: Not So Fast: Analyzing the Performance
+of WebAssembly vs. Native Code
 
 permalink: /paper
 ---
