@@ -1,5 +1,5 @@
 (module
-  (memory 1 20)
+  (import "env" "memory" (memory 1))
   (func (export "memory") (result i32)
     i32.const 0
     i32.const 4
