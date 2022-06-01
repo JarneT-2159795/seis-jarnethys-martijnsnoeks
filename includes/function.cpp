@@ -245,8 +245,8 @@ void Function::performOperation(uint8_t byte, std::vector<int> &jumpStack, std::
                     } else {
                         bs.seek(1); // Break depth
                     }
+                    loopStarts.pop_back();
                 }
-                loopStarts.pop_back();
                 lastBlock.pop();
                 break;
             }
