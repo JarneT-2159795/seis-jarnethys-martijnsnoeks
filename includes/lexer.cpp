@@ -71,18 +71,19 @@ int Lexer::lex()
                     case '=':
                         this->tokens.emplace_back(TokenType::KEYWORD, std::string(1, this->byteStream->readByte()));
                         break;
+                case '-':
+                    byteStream->seek(1);
+                    if (Character::isNumeric(byteStream->peekByte())) {
+                        byteStream->seek(-1);
+                        this->tokens.push_back( this->parseNumber() );
+                    }
+                    break;
                 default:
                     std::cout << "Unknown character " << this->byteStream->peekByte() << " at byte " << this->byteStream->getCurrentByteIndex() << std::endl;
                     this->tokens.emplace_back(TokenType::STRING, std::string(1, this->byteStream->readByte()) ) ;
                     break;
             }
         }
-
-        // TODO: support:
-        // - extra parameters with = (e.g., seek=XYZ for memory ops)
-        // - hexadecimal numbers (e.g., 0x12) https://webassembly.github.io/spec/core/text/values.html#integers
-        // - floating point numbers https://webassembly.github.io/spec/core/text/values.html#floating-point
-
 	}
     return 0;
 }
@@ -102,7 +103,8 @@ Token Lexer::parseNumber()
 {
     std::string val = "";
 
-    while( Character::isNumeric(this->byteStream->peekByte()) || this->byteStream->peekByte() == '.' || this->byteStream->peekByte() == 'x' ) {
+    while( Character::isNumeric(this->byteStream->peekByte()) || this->byteStream->peekByte() == '.' || this->byteStream->peekByte() == 'x' ||
+            this->byteStream->peekByte() == '-' ) {
         val.append( 1, this->byteStream->readByte() );
     }
 
