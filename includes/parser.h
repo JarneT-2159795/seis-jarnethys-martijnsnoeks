@@ -14,6 +14,7 @@ private:
     std::vector<AST_Memory*> memories;
     std::vector<AST_Data*> datas;
     AST_Function* currentFunction = nullptr;
+    int openBlocks = 0;
 
 public:
 	Parser(Lexer *lexer) : lexer(lexer) {}

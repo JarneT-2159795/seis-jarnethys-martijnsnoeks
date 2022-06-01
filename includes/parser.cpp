@@ -222,7 +222,7 @@ void Parser::parseProper() {
                             instruction->parameter = tokens[i].uint32_value;
                         } else if(op == constants::MEMORYSIZE || op == constants::MEMORYGROW) {
                             instruction->parameter = 0; // only one block of memory in the current WA spec
-                        } else if(op == constants::IF) {
+                        } else if(op == constants::IF || op == constants::LOOP || op == constants::BLOCK) {
                             if (tokens[i + 1].string_value == "(") {
                                 i += 3;
                                 while (tokens[i].string_value != ")") {
@@ -298,8 +298,18 @@ void Parser::parseProper() {
                 break;
             }
             case TokenType::BRACKETS_OPEN:
+                {
+                    auto next = tokens[i + 1].string_value;
+                    if (next == "loop" || next == "block") {
+                        openBlocks++;
+                    }
+                    break;
+                }
             case TokenType::BRACKETS_CLOSED:
-			// FIXME: TODO: properly support these, some of these should become END instructions!!!
+                if (openBlocks > 0) {
+                    openBlocks--;
+                    output->push_back(new Instruction(InstructionType::INSTRUCTION_WITHOUT_PARAMETER, constants::BLOCK_END));
+                }
                 break;
             default: {
                 if (!HACK_inCodeBlock) {

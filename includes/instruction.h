@@ -72,6 +72,10 @@ public:
 
         if ( name == "if" ) return constants::IF;
         if ( name == "else" ) return constants::ELSE;
+        if (name == "loop") return constants::LOOP;
+        if (name == "block") return constants::BLOCK;
+        if (name == "br_if") return constants::BR_IF;
+        if (name == "br") return constants::BR;
         if ( name == "call" ) return constants::CALL;
         if ( name == "end" ) return constants::BLOCK_END;
         // TODO: support other operations!

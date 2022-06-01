@@ -26,7 +26,7 @@ ByteStream* Compiler::compileBody(AST_Function* function) {
             fullOutput->writeByte(instruction->parameter);
             continue;
         }
-        if (instruction->instruction_code == constants::IF) {
+        if (instruction->instruction_code == constants::IF || instruction->instruction_code == constants::LOOP) {
             for (auto type : instruction->block_parameters) {
                 fullOutput->writeByte(type);
             }
