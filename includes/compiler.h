@@ -22,7 +22,6 @@ private:
     void writeTypeSection();
     void writeImportSection();
     void writeExportSection();
-    void writeDataSection();
 
 public:
     Compiler(std::vector<AST_Function*> funcs, std::vector<AST_Memory*> mems, std::vector<AST_Data*> data) : functions(funcs), memories(mems), datas(data) {};

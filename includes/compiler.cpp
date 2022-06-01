@@ -26,6 +26,12 @@ ByteStream* Compiler::compileBody(AST_Function* function) {
             fullOutput->writeByte(instruction->parameter);
             continue;
         }
+        if (instruction->instruction_code == constants::IF) {
+            for (auto type : instruction->block_parameters) {
+                fullOutput->writeByte(type);
+            }
+            continue;
+        }
 
         if ( instruction->type == InstructionType::INSTRUCTION_WITH_PARAMETER ) {
             fullOutput->writeUInt32( instruction->parameter );

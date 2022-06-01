@@ -118,7 +118,7 @@ public:
 
     static bool hasNoParameter( uint8_t op ) {
         const std::vector<uint8_t> noParamOPs = {
-                constants::BLOCK_END, constants::IF, constants::ELSE, constants::CALL,
+                constants::BLOCK_END, constants::ELSE,
                 constants::I32ADD, constants::I32SUB, constants::I32MUL, constants::I32DIV_S,
                 constants::I32DIV_U, constants::I32EQZ, constants::I32EQ, constants::I32NE,
                 constants::I32LT_S, constants::I32LT_U, constants::I32GT_S, constants::I32GT_U,
@@ -153,5 +153,6 @@ public:
     uint32_t instruction_code = (uint32_t) 0;
     uint32_t parameter = 0;
     float32_t float_parameter = 0.0;
+    std::vector<uint8_t> block_parameters;
 };
 #endif // __INSTRUCTION_H__

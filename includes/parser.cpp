@@ -222,6 +222,31 @@ void Parser::parseProper() {
                             instruction->parameter = tokens[i].uint32_value;
                         } else if(op == constants::MEMORYSIZE || op == constants::MEMORYGROW) {
                             instruction->parameter = 0; // only one block of memory in the current WA spec
+                        } else if(op == constants::IF) {
+                            if (tokens[i + 1].string_value == "(") {
+                                i += 3;
+                                while (tokens[i].string_value != ")") {
+                                    switch(InstructionNumber::getType(tokens[i].string_value)) {
+                                        case InstructionNumber::Type::I32:
+                                            instruction->block_parameters.push_back(constants::INT32);
+                                            break;
+                                        case InstructionNumber::Type::I64:
+                                            instruction->block_parameters.push_back(constants::INT64);
+                                            break;
+                                        case InstructionNumber::Type::F32:
+                                            instruction->block_parameters.push_back(constants::FLOAT32);
+                                            break;
+                                        case InstructionNumber::Type::F64:
+                                            instruction->block_parameters.push_back(constants::FLOAT64);
+                                            break;
+                                        default:
+                                            std::cout << "Unknown result type: " << tokens[i].string_value << std::endl;
+                                    }
+                                    i++;
+                                }
+                            } else {
+                                instruction->block_parameters.push_back(0x40); // void
+                            }
                         } else {
                             Token parameter = tokens[++i]; // parameter MUST be next behind this
                             if (parameter.type == TokenType::VARIABLE) {
