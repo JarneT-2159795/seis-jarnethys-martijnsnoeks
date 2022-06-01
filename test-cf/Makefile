@@ -7,7 +7,6 @@ local:
 	emrun --no_browser --port 8080 build_test/test.html
 
 edge-local:
-	wat2wasm --enable-multi-value code.wat
 	rm build_edge/ -rf
 	mkdir build_edge
 	cd build_edge && em++ ../main.cpp ../../includes/*.cpp -std=c++2a --no-entry -O2 -s WASM=1 -s EXPORTED_FUNCTIONS="[_useModule, _randomInt, _compile]" -s ALLOW_MEMORY_GROWTH=1 -s DYNAMIC_EXECUTION=0 -s TEXTDECODER=0 -s MODULARIZE=1 -s ENVIRONMENT='web' -s EXPORT_NAME="WASMModule" --pre-js '../pre.js' -o test.js
@@ -16,7 +15,6 @@ edge-local:
 	cd vm-worker && wrangler dev
 
 edge-publish:
-	wat2wasm --enable-multi-value code.wat
 	rm build_edge/ -rf
 	mkdir build_edge
 	cd build_edge && em++ ../main.cpp ../../includes/*.cpp -std=c++2a --no-entry -O2 -s WASM=1 -s EXPORTED_FUNCTIONS="[_useModule, _randomInt, _compile]" -s ALLOW_MEMORY_GROWTH=1 -s DYNAMIC_EXECUTION=0 -s TEXTDECODER=0 -s MODULARIZE=1 -s ENVIRONMENT='web' -s EXPORT_NAME="WASMModule" --pre-js '../pre.js' -o test.js
