@@ -167,8 +167,24 @@ void Module::readImportSection(int length) {
         std::string moduleName = bytestr.readASCIIString(stringLength);
         stringLength = bytestr.readUInt32();
         std::string fieldName = bytestr.readASCIIString(stringLength);
-        functions.emplace_back(fieldName);
-        bytestr.seek(2); // skip kind and signature
+        uint32_t kind = bytestr.readUInt32();
+        if (kind == 0) {
+            functions.emplace_back(fieldName);
+        } else if (kind == 2) {
+            if (bytestr.readUInt32()) {
+                // upper limit is set
+                int32_t init = bytestr.readInt32();
+                int32_t limit = bytestr.readInt32();
+                memories.emplace_back(init, limit);
+                memories[0].setName(fieldName);
+            } else {
+                // no upper limit
+                int32_t init = bytestr.readInt32();
+                memories.emplace_back(init);
+                memories[0].setName(fieldName);
+            }
+        }
+
     }
 }
 
